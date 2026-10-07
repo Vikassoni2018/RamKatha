@@ -1,0 +1,50 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}v{{ revision.version }} · {{ story.title }}{% endblock %}
+{% block breadcrumbs %}
+    <li><a href="{{ path('admin_story_index') }}">Stories</a></li>
+    <li><a href="{{ path('admin_story_edit', {id: story.id}) }}">{{ story.title|truncate_words(30) }}</a></li>
+    <li><a href="{{ path('admin_story_revisions', {id: story.id}) }}">Revisions</a></li>
+    <li><span aria-current="page">v{{ revision.version }}</span></li>
+{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div>
+        <h1>Version {{ revision.version }}</h1>
+        <p>{{ revision.createdAt|local_datetime }}{% if revision.changedBy %} · {{ revision.changedBy.displayName }}{% endif %}{% if revision.changeSummary %} · “{{ revision.changeSummary }}”{% endif %}</p>
+    </div>
+    <div class="actions">
+        {% if canRestore %}
+            {{ ui.post_button(path('admin_story_revision_restore', {id: story.id, version: revision.version}), 'Restore this version', {icon: 'restore', class: 'btn btn-secondary btn-sm', confirm: 'Replace the current title, subtitle, excerpt and text with version ' ~ revision.version ~ '? A new revision will be recorded and source verification may be reset.', title: 'Restore version'}) }}
+        {% endif %}
+    </div>
+</div>
+<div class="panel-grid">
+    <article class="card">
+        <div class="card-body">
+            <h2 class="mb-2">{{ revision.title }}</h2>
+            {% if revision.subtitle %}<p class="text-muted">{{ revision.subtitle }}</p>{% endif %}
+            <p class="notes-text"><strong>Excerpt:</strong> {{ revision.excerpt }}</p>
+            <hr>
+            <div class="story-body">{{ revision.body|sanitize_html('app.story_sanitizer') }}</div>
+        </div>
+    </article>
+    <aside class="card">
+        <div class="card-header"><h2>Sources at that time</h2></div>
+        <div class="card-body">
+            <dl class="kv">
+                <dt>Classification</dt><dd>{{ revision.sourceSnapshot.sourceType|default('—') }}</dd>
+                <dt>Notes</dt><dd class="notes-text">{{ revision.sourceSnapshot.sourceNotes|default('—') }}</dd>
+            </dl>
+            {% for ref in revision.sourceSnapshot.references|default([]) %}
+                <hr>
+                <dl class="kv">
+                    {% for key, value in ref %}{% if value %}<dt>{{ key }}</dt><dd>{{ value }}</dd>{% endif %}{% endfor %}
+                </dl>
+            {% endfor %}
+        </div>
+    </aside>
+</div>
+{% endblock %}

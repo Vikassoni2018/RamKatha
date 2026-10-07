@@ -1,0 +1,45 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}{{ media.originalName }}{% endblock %}
+{% block breadcrumbs %}<li><a href="{{ path('admin_media_index') }}">Media</a></li><li><span aria-current="page">{{ media.originalName|truncate_words(40) }}</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div><h1>{{ media.originalName }}</h1><p>{{ media.width }}×{{ media.height }} · {{ media.mimeType }} · {{ media.fileSize|file_size }} · uploaded {{ media.createdAt|ago }}{% if media.uploadedBy %} by {{ media.uploadedBy.displayName }}{% endif %}</p></div>
+    <div class="actions">
+        {% if is_granted('ROLE_EDITOR') %}
+            {{ ui.post_button(path('admin_media_delete', {id: media.id}), 'Delete', {icon: 'trash', class: 'btn btn-sm btn-danger-outline', confirm: usages is empty ? 'Delete this image and all its variants?' : 'This image is still in use and cannot be deleted.', danger: true, title: 'Delete image'}) }}
+        {% endif %}
+    </div>
+</div>
+<div class="panel-grid">
+    <div class="card"><div class="card-body"><img src="{{ media_url(media, 'large') }}" alt="{{ media.altText }}" width="{{ media.variantDimensions('large').width }}" height="{{ media.variantDimensions('large').height }}"></div></div>
+    <aside class="stack">
+        <section class="card">
+            <div class="card-header"><h2>Alternative text</h2></div>
+            <div class="card-body">
+                <form method="post" class="stack-sm">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                    <label class="visually-hidden" for="alt">Alternative text</label>
+                    <textarea id="alt" class="form-control" name="altText" rows="3" maxlength="255" placeholder="Describe the image for screen readers">{{ media.altText }}</textarea>
+                    <button class="btn btn-sm btn-primary" type="submit">Save</button>
+                </form>
+            </div>
+        </section>
+        <section class="card">
+            <div class="card-header"><h2>Used by</h2></div>
+            <div class="card-body">
+                {% if usages is not empty %}<ul class="mb-0">{% for u in usages %}<li class="text-sm">{{ u }}</li>{% endfor %}</ul>{% else %}<p class="text-muted text-sm mb-0">Not used anywhere — safe to delete.</p>{% endif %}
+            </div>
+        </section>
+        <section class="card">
+            <div class="card-header"><h2>Files</h2></div>
+            <div class="card-body text-xs">
+                <p class="mb-0"><code>{{ media.storageKey }}</code></p>
+                {% for name, v in media.variants %}<p class="mb-0"><code>{{ v.key }}</code> ({{ name }}, {{ v.width }}×{{ v.height }})</p>{% endfor %}
+            </div>
+        </section>
+    </aside>
+</div>
+{% endblock %}

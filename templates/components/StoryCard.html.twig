@@ -1,0 +1,32 @@
+{# Story card. variant: default | row. headingLevel keeps the document outline correct per section. #}
+{% props story, variant = 'default', headingLevel = 3, progress = null, showExcerpt = true, highlightTerms = null %}
+{% set category = story.categories|first %}
+<article class="story-card {{ variant == 'row' ? 'story-card-row' }}">
+    <div class="story-card-media">
+        <twig:Cover :media="story.coverImage" variant="card" alt="" />
+        <div class="story-card-badges">
+            {% if story.hasPlayableAudio %}
+                <span class="badge">{{ icon('headphones') }} <span class="visually-hidden">{{ 'common.audio_duration'|trans }}</span>{{ story.audioDurationSeconds|duration }}</span>
+            {% endif %}
+            {% if story.isSourceVerified %}
+                <span class="badge badge-verified" title="{{ 'common.source_verified'|trans }}">{{ icon('shield-check') }}<span class="visually-hidden">{{ 'common.source_verified'|trans }}</span></span>
+            {% endif %}
+        </div>
+        {% if progress is not null and progress > 0 %}
+            <div class="card-progress" aria-hidden="true"><span style="width: {{ min(100, progress) }}%"></span></div>
+        {% endif %}
+    </div>
+    <div class="story-card-body">
+        {% if category %}<span class="story-card-kicker"{{ lang_attr(category, 'name') }}>{{ category|localized('name') }}</span>{% endif %}
+        <h{{ headingLevel }} class="story-card-title line-clamp-2"{{ lang_attr(story, 'title') }}>
+            <a href="{{ path('app_story_show', {slug: story.slug}) }}">{% if highlightTerms %}{{ story|localized('title')|highlight(highlightTerms) }}{% else %}{{ story|localized('title') }}{% endif %}</a>
+        </h{{ headingLevel }}>
+        {% if showExcerpt %}
+            <p class="story-card-excerpt line-clamp-2"{{ lang_attr(story, 'excerpt') }}>{% if highlightTerms %}{{ story|localized('excerpt')|truncate_words(180)|highlight(highlightTerms) }}{% else %}{{ story|localized('excerpt')|truncate_words(180) }}{% endif %}</p>
+        {% endif %}
+        <div class="story-card-meta">
+            <span>{{ icon('book-open', 'icon-sm') }} {{ 'common.read_minutes'|trans({'%minutes%': story.readingTimeMinutesFor(app.locale)}) }}</span>
+            {% if story.scripture %}<span{{ lang_attr(story.scripture, 'name') }}>{{ icon('book', 'icon-sm') }} {{ story.scripture|localized('name') }}</span>{% endif %}
+        </div>
+    </div>
+</article>

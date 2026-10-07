@@ -1,0 +1,111 @@
+# This file is the entry point to configure your own services.
+# Files in the packages/ subdirectory configure your dependencies.
+# https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
+parameters:
+    # Defaults for optional environment variables (so the app boots with a minimal .env)
+    env(SITE_URL): 'http://localhost:8000'
+    env(APP_TIMEZONE): 'Asia/Kolkata'
+    env(APP_MEDIA_DIR): '%kernel.project_dir%/public/media'
+    env(APP_MEDIA_URL_PREFIX): '/media'
+    env(APP_STORAGE_DIR): '%kernel.project_dir%/var/storage'
+    env(AUDIT_LOG_STORE_IP): '1'
+    env(APP_X_SENDFILE): '0'
+    env(MAILER_FROM): 'no-reply@example.com'
+    env(MAILER_FROM_NAME): 'Katha'
+    env(TTS_PROVIDER): 'none'
+    env(TTS_BINARY_PATH): ''
+    env(TTS_BINARY_ARGS): '-v {voice} -f {input} -w {output}'
+    env(TTS_VOICE): 'hi'
+    env(TTS_LANGUAGE): 'hi-IN'
+    env(TTS_OUTPUT_FORMAT): 'wav'
+    env(TTS_TIMEOUT): '300'
+    env(TTS_CHUNK_MAX_CHARS): '900'
+    env(TTS_HTTP_ENDPOINT): ''
+    env(TTS_HTTP_API_KEY): ''
+    env(FFMPEG_BINARY): 'ffmpeg'
+    env(FFPROBE_BINARY): 'ffprobe'
+    env(AUDIO_BITRATE): '64k'
+    env(AUDIOGRAM_ENABLED): '0'
+    env(FACEBOOK_ENABLED): '0'
+    env(FACEBOOK_PAGE_ID): ''
+    env(FACEBOOK_ACCESS_TOKEN): ''
+    env(FACEBOOK_API_VERSION): 'v23.0'
+    env(UPI_ID): ''
+    env(UPI_PAYEE_NAME): ''
+
+    app.site_url: '%env(SITE_URL)%'
+    app.timezone: '%env(APP_TIMEZONE)%'
+    app.media_dir: '%env(resolve:APP_MEDIA_DIR)%'
+    app.media_url_prefix: '%env(APP_MEDIA_URL_PREFIX)%'
+    app.storage_dir: '%env(resolve:APP_STORAGE_DIR)%'
+    app.default_language: 'hi'
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+        exclude:
+            - '../src/DependencyInjection/'
+            - '../src/Entity/'
+            - '../src/Kernel.php'
+            - '../src/Enum/'
+            - '../src/DTO/'
+            - '../src/Message/'
+            - '../src/Service/Storage/LocalStorage.php'
+            # Fixtures depend on dev-only packages; registered below for dev/test only.
+            - '../src/DataFixtures/'
+
+    # --- Local filesystem storage --------------------------------------------------------
+    # Public disk: files served directly by the web server under /media.
+    app.storage.public:
+        class: App\Service\Storage\LocalStorage
+        arguments:
+            $rootDir: '%app.media_dir%'
+            $publicUrlPrefix: '%app.media_url_prefix%'
+
+    # Private disk: never web accessible (audio masters, exports...). Served through controllers.
+    app.storage.private:
+        class: App\Service\Storage\LocalStorage
+        arguments:
+            $rootDir: '%app.storage_dir%/private'
+            $publicUrlPrefix: null
+
+    App\Service\Storage\StorageInterface $publicStorage: '@app.storage.public'
+    App\Service\Storage\StorageInterface $privateStorage: '@app.storage.private'
+
+    App\Service\Storage\TempDirectoryManager:
+        arguments:
+            $baseDir: '%app.storage_dir%/temp'
+
+    # --- HTML sanitizer for story/page bodies ---------------------------------------------
+    App\Service\Content\HtmlContentSanitizer:
+        arguments:
+            $sanitizer: '@html_sanitizer.sanitizer.app.story_sanitizer'
+
+    # --- Clock ------------------------------------------------------------------------------
+    # Every timestamp is UTC (Doctrine stores wall-clock values without a zone). Pinning the
+    # clock guarantees this even if the global clock was created under php.ini's date.timezone.
+    clock:
+        class: Symfony\Component\Clock\Clock
+        arguments:
+            $clock: null
+            $timezone: !service { class: DateTimeZone, arguments: ['UTC'] }
+
+when@dev:
+    services:
+        _defaults:
+            autowire: true
+            autoconfigure: true
+        App\DataFixtures\:
+            resource: '../src/DataFixtures/'
+
+when@test:
+    services:
+        _defaults:
+            autowire: true
+            autoconfigure: true
+        App\DataFixtures\:
+            resource: '../src/DataFixtures/'

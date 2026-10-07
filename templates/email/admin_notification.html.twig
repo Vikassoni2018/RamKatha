@@ -1,0 +1,11 @@
+{% extends 'email/_layout.html.twig' %}
+
+{% block content %}
+    <p style="margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#b42318">{{ notification.level.value }} · {{ notification.type.value }}</p>
+    <h1 style="font-size:20px;margin:0 0 12px">{{ notification.title }}</h1>
+    {% if notification.message %}<p style="margin:0 0 16px;white-space:pre-line">{{ notification.message }}</p>{% endif %}
+    {% if url %}
+        <p style="margin:20px 0"><a href="{{ url }}" style="display:inline-block;padding:10px 20px;border-radius:999px;background:#7a1f2b;color:#ffffff;text-decoration:none;font-weight:700">Open in admin panel</a></p>
+    {% endif %}
+    <p style="margin:0;font-size:12px;color:#776558">{{ notification.createdAt|date('Y-m-d H:i') }}</p>
+{% endblock %}

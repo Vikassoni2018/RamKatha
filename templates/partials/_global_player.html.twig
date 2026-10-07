@@ -1,0 +1,29 @@
+{# Persistent across Turbo page visits (same id + data-turbo-permanent on every public page). #}
+<div id="global-player" data-turbo-permanent
+     data-controller="player"
+     data-player-progress-url-value="{{ app.user ? path('api_progress') : '' }}"
+     data-player-authenticated-value="{{ app.user ? 'true' : 'false' }}"
+     data-player-threshold-value="{{ setting('story_completion_threshold') }}">
+    <audio preload="none" data-player-target="audio"></audio>
+    <section class="mini-player" aria-label="{{ 'player.label'|trans }}">
+        <div class="mini-player-progress" aria-hidden="true"><span data-player-target="bar"></span></div>
+        <div class="mini-player-inner">
+            <img class="mini-player-cover" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="" width="46" height="46" hidden data-player-target="cover">
+            <div class="mini-player-info">
+                <a class="mini-player-title" href="#" data-player-target="title"></a>
+                <span class="mini-player-time" data-player-target="time" aria-live="off">0:00 / 0:00</span>
+            </div>
+            <button type="button" class="player-btn hide-sm" aria-label="{{ 'player.back_10'|trans }}" data-action="player#back">{{ icon('rewind-10') }}</button>
+            <button type="button" class="play-button" aria-label="{{ 'player.play'|trans }}" data-player-target="playButton" data-action="player#toggle">
+                <span data-player-target="playIcon">{{ icon('play', 'icon-play') }}</span>
+                <span data-player-target="pauseIcon" hidden>{{ icon('pause') }}</span>
+            </button>
+            <button type="button" class="player-btn hide-sm" aria-label="{{ 'player.forward_10'|trans }}" data-action="player#forward">{{ icon('forward-10') }}</button>
+            <label class="visually-hidden" for="mini-speed">{{ 'player.speed'|trans }}</label>
+            <select id="mini-speed" class="speed-select" data-player-target="speed" data-action="change->player#changeRate">
+                {% for rate in [0.75, 1, 1.25, 1.5, 2] %}<option value="{{ rate }}">{{ rate }}x</option>{% endfor %}
+            </select>
+            <button type="button" class="player-btn" aria-label="{{ 'player.close'|trans }}" data-action="player#close">{{ icon('close') }}</button>
+        </div>
+    </section>
+</div>

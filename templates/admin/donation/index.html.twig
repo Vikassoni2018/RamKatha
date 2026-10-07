@@ -1,0 +1,74 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}Contributions{% endblock %}
+{% block breadcrumbs %}<li><span aria-current="page">Contributions</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div><h1>Voluntary contributions (UPI)</h1><p>Static UPI QR payments cannot be confirmed automatically: verify each declared contribution against your bank statement.</p></div>
+    <div class="actions"><a class="btn btn-sm" href="{{ path('admin_donation_export', query) }}" data-turbo="false">{{ icon('download', 'icon-sm') }} Export CSV</a></div>
+</div>
+
+{% if upiError %}{% include 'partials/_alert.html.twig' with {type: 'warning', title: 'UPI not configured', message: upiError} only %}{% endif %}
+
+<div class="stat-grid">
+    {% for status in enum('App\\Enum\\DonationStatus').cases() %}
+        {% set t = byStatus[status.value]|default({count: 0, amount: 0}) %}
+        <a class="stat-card {{ status.value == 'declared' and t.count > 0 ? 'is-warning' : (status.value == 'verified' ? 'is-success' : '') }}" href="{{ path('admin_donation_index', {status: status.value}) }}">
+            <span class="stat-label">{{ status.label }}</span><span class="stat-value">{{ t.count }}</span><span class="stat-sub">{{ t.amount|money }}</span>
+        </a>
+    {% endfor %}
+</div>
+
+<form class="filter-bar" method="get">
+    <div class="form-group grow"><label class="form-label" for="dq">Search</label><input id="dq" class="form-control" type="search" name="q" value="{{ app.request.query.get('q') }}" placeholder="Reference, UTR, name, email…"></div>
+    <div class="form-group"><label class="form-label" for="ds">Status</label><select id="ds" class="form-select" name="status"><option value="">Any</option>{% for s in enum('App\\Enum\\DonationStatus').cases() %}<option value="{{ s.value }}" {% if filters.status == s %}selected{% endif %}>{{ s.label }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label class="form-label" for="df">From</label><input id="df" class="form-control" type="date" name="from" value="{{ app.request.query.get('from') }}"></div>
+    <div class="form-group"><label class="form-label" for="dt">To</label><input id="dt" class="form-control" type="date" name="to" value="{{ app.request.query.get('to') }}"></div>
+    <div class="form-group"><label class="form-label" for="dst">Story ID</label><input id="dst" class="form-control" type="number" min="1" name="story" value="{{ app.request.query.get('story') }}"></div>
+    <div class="actions"><button class="btn btn-primary btn-sm">Filter</button><a class="btn btn-ghost btn-sm" href="{{ path('admin_donation_index') }}">Reset</a></div>
+</form>
+
+<div class="panel-grid">
+    <div>
+        {% if donations|length > 0 %}
+            <div class="admin-table-card">
+                <table class="admin-table">
+                    <thead><tr><th>Reference</th><th class="num">Amount</th><th>Status</th><th>UTR</th><th>Donor</th><th>Story</th><th>Date</th></tr></thead>
+                    <tbody>
+                        {% for d in donations %}
+                            <tr>
+                                <td class="cell-main" data-label="Reference"><a class="cell-title" href="{{ path('admin_donation_show', {id: d.id}) }}">{{ d.referenceCode }}</a></td>
+                                <td class="num" data-label="Amount">{{ d.amountPaise|money }}</td>
+                                <td data-label="Status">{{ ui.status_badge(d.status) }}</td>
+                                <td data-label="UTR"><code>{{ d.upiTransactionReference ?: '—' }}</code></td>
+                                <td data-label="Donor">{{ d.displayName }}</td>
+                                <td data-label="Story">{{ d.story ? d.story.title|truncate_words(40) : '—' }}</td>
+                                <td data-label="Date">{{ d.createdAt|local_datetime('d M Y H:i') }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="table-footer"><span>{{ totals.count }} matching · {{ totals.amount|money }} total</span><twig:Pagination :paginator="donations" :summary="false" label="Pagination" previous="Previous" next="Next" /></div>
+            </div>
+        {% else %}
+            {{ ui.empty('rupee', 'No contributions found', 'Contributions appear here once visitors use the support card.') }}
+        {% endif %}
+    </div>
+    <aside class="card">
+        <div class="card-header"><h2>Verified totals per story</h2></div>
+        {% if storyTotals is not empty %}
+            <table class="admin-table">
+                <tbody>
+                    {% for s in storyTotals %}
+                        <tr><td class="cell-main"><a href="{{ path('admin_donation_index', {story: s.storyId, status: 'verified'}) }}">{{ s.title|truncate_words(40) }}</a></td><td class="num">{{ s.amount|money }}<span class="cell-sub">{{ s.count }}×</span></td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="card-body"><p class="text-muted mb-0">No verified contributions yet.</p></div>
+        {% endif %}
+    </aside>
+</div>
+{% endblock %}

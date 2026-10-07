@@ -1,0 +1,30 @@
+{# Small reusable admin building blocks. #}
+
+{# POST action button with CSRF token and optional modal confirmation. #}
+{% macro post_button(url, label, options = {}) %}
+    {% set o = {icon: null, class: 'btn btn-sm', confirm: null, danger: false, title: 'Please confirm', fields: {}}|merge(options) %}
+    <form method="post" action="{{ url }}" class="inline-form"
+          {% if o.confirm %}data-controller="confirm" data-confirm-message-value="{{ o.confirm }}" data-confirm-title-value="{{ o.title }}" data-confirm-confirm-label-value="{{ label|striptags }}" data-confirm-danger-value="{{ o.danger ? 'true' : 'false' }}" data-action="submit->confirm#ask"{% endif %}>
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+        {% for name, value in o.fields %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+        <button type="submit" class="{{ o.class }}">{% if o.icon %}{{ icon(o.icon, 'icon-sm') }} {% endif %}{{ label }}</button>
+    </form>
+{% endmacro %}
+
+{# Page header with title, subtitle and actions slot (pass HTML via block). #}
+{% macro empty(icon, title, text, actionUrl = null, actionLabel = null) %}
+    <div class="empty-state">
+        <span class="empty-state-icon">{{ icon(icon) }}</span>
+        <h2>{{ title }}</h2>
+        {% if text %}<p>{{ text }}</p>{% endif %}
+        {% if actionUrl and actionLabel %}<a class="btn btn-primary btn-sm" href="{{ actionUrl }}">{{ actionLabel }}</a>{% endif %}
+    </div>
+{% endmacro %}
+
+{% macro status_badge(enum) %}
+    {% if enum %}<span class="badge badge-{{ enum.badge }}">{{ enum.label is defined ? enum.label : enum.value }}</span>{% else %}<span class="text-subtle">—</span>{% endif %}
+{% endmacro %}
+
+{% macro check_icon(status) %}
+    {{ icon(status == 'ok' ? 'check-circle' : (status == 'warn' ? 'alert-triangle' : 'alert-circle'), 'check-icon ' ~ status) }}
+{% endmacro %}

@@ -1,0 +1,59 @@
+# see https://symfony.com/doc/current/reference/configuration/framework.html
+framework:
+    secret: '%env(APP_SECRET)%'
+    default_locale: hi
+    enabled_locales: ['hi', 'en']
+    trusted_proxies: '%env(default::TRUSTED_PROXIES)%'
+    trusted_headers: ['x-forwarded-for', 'x-forwarded-host', 'x-forwarded-proto', 'x-forwarded-port', 'x-forwarded-prefix']
+
+    session:
+        handler_id: null
+        cookie_secure: auto
+        cookie_samesite: lax
+        cookie_httponly: true
+        name: KATHASESSID
+        gc_maxlifetime: 7200
+
+    php_errors:
+        log: true
+
+    http_client:
+        default_options:
+            timeout: 20
+            max_redirects: 3
+            headers:
+                'User-Agent': 'KathaPlatform/1.0 (+Symfony HttpClient)'
+
+    html_sanitizer:
+        sanitizers:
+            app.story_sanitizer:
+                # Only safe semantic tags; everything else is unwrapped (text kept) or dropped entirely.
+                # "lang" marks quoted Sanskrit/Hindi inside an English text (screen readers, fonts).
+                allow_elements:
+                    p: ['lang']
+                    br: []
+                    h2: []
+                    h3: []
+                    h4: []
+                    blockquote: ['lang']
+                    strong: []
+                    em: []
+                    ul: []
+                    ol: []
+                    li: []
+                    hr: []
+                    a: ['href', 'title']
+                block_elements: ['div', 'span', 'b', 'i', 'u', 'font', 'section', 'article', 'h1', 'h5', 'h6', 'pre', 'code', 'small', 'mark', 'sup', 'sub', 'figure', 'figcaption', 'table', 'thead', 'tbody', 'tr', 'td', 'th', 'center']
+                drop_elements: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'select', 'textarea', 'svg', 'math', 'img', 'video', 'audio', 'link', 'meta', 'noscript', 'template', 'head', 'title']
+                allowed_link_schemes: ['https', 'http', 'mailto']
+                allow_relative_links: true
+                force_attributes:
+                    a:
+                        rel: 'noopener noreferrer nofollow'
+                max_input_length: 600000
+
+when@test:
+    framework:
+        test: true
+        session:
+            storage_factory_id: session.storage.factory.mock_file

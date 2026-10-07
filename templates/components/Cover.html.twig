@@ -1,0 +1,16 @@
+{# Responsive image with srcset/lazy-loading, or a calm decorative fallback when no image exists.
+   Alt texts are editorial (Hindi, no English field): on other-language pages a Devanagari alt text
+   gets lang="hi" so screen readers pronounce it correctly. #}
+{% props media = null, variant = 'card', alt = '', sizes = '(min-width: 1024px) 25vw, (min-width: 640px) 45vw, 80vw', eager = false, class = '' %}
+{% if media %}
+    {% set dims = media.variantDimensions(variant) %}
+    <img src="{{ media_url(media, variant) }}"
+         {% if media_srcset(media) %}srcset="{{ media_srcset(media) }}" sizes="{{ sizes }}"{% endif %}
+         {% if app.locale != 'hi' and (media.altText ?: alt) matches '/\\p{Devanagari}/u' %}lang="hi" {% endif %}alt="{{ media.altText ?: alt }}"
+         {% if dims.width %}width="{{ dims.width }}" height="{{ dims.height }}"{% endif %}
+         loading="{{ eager ? 'eager' : 'lazy' }}" decoding="async"
+         {% if eager %}fetchpriority="high"{% endif %}
+         class="{{ class }}">
+{% else %}
+    <div class="cover-fallback {{ class }}" aria-hidden="true">{{ icon('diya') }}</div>
+{% endif %}

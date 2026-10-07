@@ -1,0 +1,71 @@
+{#
+  Voluntary support card. Calm placement near the end of the story, never above the content.
+  The QR/UPI link only initiates a payment in the donor's own UPI app; nothing is verified here.
+  Message: the story's own support message (English variant on /en when it exists, else the Hindi
+  original marked lang="hi"), otherwise the site-wide message (setting() follows the page language).
+#}
+{% set story = story|default(null) %}
+{% set uid = story ? story.uuid.toRfc4122 : 'site' %}
+{% set story_message = story ? story|localized('donationMessage') : null %}
+<section class="support-card" aria-labelledby="support-title-{{ uid }}"
+         data-controller="donation"
+         data-donation-initiate-url-value="{{ path('app_support_initiate') }}"
+         data-donation-story-value="{{ story ? story.uuid.toRfc4122 : '' }}"
+         data-donation-min-value="{{ setting('donation_min_amount') }}"
+         data-donation-max-value="{{ setting('donation_max_amount') }}">
+    <div class="support-card-header">
+        <span class="icon-wrap">{{ icon('heart') }}</span>
+        <div>
+            <h2 id="support-title-{{ uid }}">{{ 'support.card.title'|trans }} <span class="text-muted text-sm">{{ 'support.card.voluntary'|trans }}</span></h2>
+        </div>
+    </div>
+    <p class="support-message"{% if story_message %}{{ lang_attr(story, 'donationMessage') }}{% endif %}>{{ story_message ?: setting('donation_message') }}</p>
+
+    <form data-action="donation#start" novalidate>
+        <fieldset class="amount-options">
+            <legend>{{ 'support.card.choose_amount'|trans }}</legend>
+            {% for amount in presets %}
+                <label class="amount-option">
+                    <input type="radio" name="amount_preset" value="{{ amount }}" data-action="change->donation#selectPreset" {% if loop.index == 2 %}checked{% endif %}>
+                    <span>₹{{ amount }}</span>
+                </label>
+            {% endfor %}
+        </fieldset>
+        <div class="form-row form-row-2">
+            <div class="form-group mb-0">
+                <label class="form-label" for="custom-amount-{{ uid }}">{{ 'support.card.custom_amount'|trans }}</label>
+                <div class="input-group">
+                    <span class="input-prefix" aria-hidden="true">₹</span>
+                    <input id="custom-amount-{{ uid }}" class="form-control" type="text" inputmode="decimal" maxlength="9" autocomplete="off"
+                           placeholder="{{ 'support.card.custom_amount_placeholder'|trans }}" data-donation-target="custom" data-action="input->donation#customInput">
+                </div>
+            </div>
+            <div class="form-group mb-0 align-end">
+                <button type="submit" class="btn btn-secondary btn-block" data-donation-target="submit">{{ icon('smartphone') }} {{ 'support.card.pay_button'|trans }}</button>
+            </div>
+        </div>
+        <p class="form-error mt-4" role="alert" hidden data-donation-target="error"></p>
+    </form>
+
+    <p class="support-safety">{{ icon('lock', 'icon-sm') }} {{ 'support.card.safety'|trans }}</p>
+
+    <dialog class="modal" aria-labelledby="upi-dialog-title-{{ uid }}" data-donation-target="dialog" data-action="click->donation#backdrop">
+        <div class="modal-header">
+            <h2 id="upi-dialog-title-{{ uid }}">{{ 'support.dialog.title'|trans }} · <span data-donation-target="amount"></span></h2>
+            <button type="button" class="btn btn-ghost btn-icon" aria-label="{{ 'common.close'|trans }}" data-action="donation#close">{{ icon('close') }}</button>
+        </div>
+        <div class="modal-body stack">
+            <a class="btn btn-primary btn-block btn-lg" href="#" data-donation-target="upiLink">{{ icon('smartphone') }} {{ 'support.dialog.open_app'|trans }}</a>
+            <p class="text-sm text-muted text-center mb-0">{{ 'support.dialog.scan_qr'|trans }}</p>
+            <div class="qr-box">
+                <img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="{{ 'support.dialog.qr_alt'|trans }}" width="260" height="260" data-donation-target="qr">
+                <p class="text-xs text-muted mb-0">{{ 'support.reference_code_label'|trans }} <span class="upi-ref" data-donation-target="reference"></span></p>
+            </div>
+            <p class="text-sm mb-0">{{ 'support.dialog.utr_note'|trans }}</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" data-action="donation#close">{{ 'support.dialog.later'|trans }}</button>
+            <a class="btn btn-secondary" href="#" data-donation-target="declareLink">{{ 'support.dialog.paid'|trans }}</a>
+        </div>
+    </dialog>
+</section>

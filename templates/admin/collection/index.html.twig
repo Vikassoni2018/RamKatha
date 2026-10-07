@@ -1,0 +1,42 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}Collections{% endblock %}
+{% block breadcrumbs %}<li><span aria-current="page">Collections</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header"><div><h1>User collections</h1><p>Moderation of reader-created collections. Private collections are visible here only to administrators.</p></div></div>
+
+<form class="filter-bar" method="get" data-controller="autosubmit">
+    <div class="form-group grow"><label class="form-label" for="cq">Search</label><input id="cq" class="form-control" type="search" name="q" value="{{ app.request.query.get('q') }}" placeholder="Name or owner email…"></div>
+    <div class="form-group"><label class="form-label" for="cv">Visibility</label>
+        <select id="cv" class="form-select" name="visibility" data-action="change->autosubmit#submit"><option value="">Any</option>{% for v in enum('App\\Enum\\CollectionVisibility').cases() %}<option value="{{ v.value }}" {% if visibility == v %}selected{% endif %}>{{ v.label }}</option>{% endfor %}</select>
+    </div>
+    <div class="actions"><button class="btn btn-primary btn-sm">Filter</button></div>
+</form>
+
+{% if collections|length > 0 %}
+    <div class="admin-table-card">
+        <table class="admin-table">
+            <thead><tr><th>Collection</th><th>Owner</th><th>Visibility</th><th>Updated</th><th class="cell-actions"><span class="visually-hidden">Actions</span></th></tr></thead>
+            <tbody>
+                {% for c in collections %}
+                    <tr>
+                        <td class="cell-main" data-label="Collection"><a class="cell-title" href="{{ path('app_collection_show', {uuid: c.uuid.toRfc4122}) }}" target="_blank" rel="noopener">{{ c.name }}</a>{% if c.description %}<span class="cell-sub">{{ c.description|truncate_words(100) }}</span>{% endif %}</td>
+                        <td data-label="Owner"><a href="{{ path('admin_user_edit', {id: c.user.id}) }}">{{ c.user.displayName }}</a></td>
+                        <td data-label="Visibility"><span class="badge badge-{{ c.visibility.value == 'public' ? 'info' : 'neutral' }}">{{ c.visibility.label }}</span></td>
+                        <td data-label="Updated">{{ c.updatedAt|ago }}</td>
+                        <td class="cell-actions">
+                            {% if c.visibility.value != 'private' %}{{ ui.post_button(path('admin_collection_private', {id: c.id}), 'Make private', {icon: 'lock', class: 'btn btn-ghost btn-sm', confirm: 'Make this collection private?', title: 'Moderate'}) }}{% endif %}
+                            {{ ui.post_button(path('admin_collection_delete', {id: c.id}), 'Delete', {icon: 'trash', class: 'btn btn-ghost btn-sm', confirm: 'Delete this collection? Stories are not affected.', danger: true, title: 'Delete collection'}) }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="table-footer"><span>{{ collections.totalItems }} total</span><twig:Pagination :paginator="collections" :summary="false" label="Pagination" previous="Previous" next="Next" /></div>
+    </div>
+{% else %}
+    {{ ui.empty('folder', 'No collections', 'Readers have not created collections yet.') }}
+{% endif %}
+{% endblock %}

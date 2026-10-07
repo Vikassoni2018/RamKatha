@@ -1,0 +1,7 @@
+[{{ notification.level.value|upper }}] {{ notification.title }}
+
+{{ notification.message }}
+
+{% if url %}Open: {{ url }}{% endif %}
+
+{{ notification.createdAt|date('Y-m-d H:i') }} — {{ site_name }}

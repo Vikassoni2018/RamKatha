@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=../vendor/symfony/routing/Loader/schema/routing.schema.json
+
+# This file is the entry point to configure the routes of your app.
+# Methods with the #[Route] attribute are imported per directory below.
+# See also https://symfony.com/doc/current/routing.html
+
+# To list all registered routes, run the following command:
+#   bin/console debug:router
+
+# Admin panel: English UI, one URL per page.
+admin_controllers:
+    resource: ../src/Controller/Admin/
+    type: attribute
+
+# Locale-neutral endpoints: crawler files (sitemaps list both languages) and audio bytes.
+locale_neutral_controllers:
+    resource: '../src/Controller/Public/{SeoController,AudioStreamController}.php'
+    type: attribute
+
+# Everything visitors read or use exists twice: Hindi at the original URLs and English under /en.
+# Route names get a locale suffix (app_home.hi, app_home.en); generate them by their plain name and
+# the current locale is chosen automatically (pass _locale to target the other language).
+localized_controllers:
+    resource: '../src/Controller/{Public,Account,Api}/*Controller.php'
+    type: attribute
+    exclude: '../src/Controller/Public/{SeoController,AudioStreamController}.php'
+    prefix:
+        hi: ''
+        en: '/en'
+    trailing_slash_on_root: false

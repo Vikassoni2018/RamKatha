@@ -1,0 +1,8 @@
+{% props icon = 'book-open', title = '', text = null, actionUrl = null, actionLabel = null, headingLevel = 2 %}
+<div class="empty-state">
+    <span class="empty-state-icon">{{ icon(icon) }}</span>
+    <h{{ headingLevel }}>{{ title }}</h{{ headingLevel }}>
+    {% if text %}<p>{{ text }}</p>{% endif %}
+    {% block content %}{% endblock %}
+    {% if actionUrl and actionLabel %}<a class="btn btn-secondary" href="{{ actionUrl }}">{{ actionLabel }}</a>{% endif %}
+</div>

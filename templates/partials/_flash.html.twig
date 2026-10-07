@@ -1,0 +1,15 @@
+{# Reads flashes only when a session already exists, so anonymous pages never start a session. #}
+{% if app.request.hasPreviousSession %}
+    {% set flashes = app.flashes %}
+    {% if flashes is not empty %}
+        <div class="{{ flash_container_class|default('container') }}">
+            <div class="flash-stack">
+                {% for type, messages in flashes %}
+                    {% for message in messages %}
+                        {% include 'partials/_alert.html.twig' with {type: type, message: message, dismissible: true} only %}
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+{% endif %}

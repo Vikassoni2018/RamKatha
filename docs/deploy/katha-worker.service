@@ -1,0 +1,28 @@
+# systemd unit for the background worker (Messenger queue + Symfony Scheduler).
+# Install:  cp docs/deploy/katha-worker.service /etc/systemd/system/
+#           systemctl daemon-reload && systemctl enable --now katha-worker
+# Logs:     journalctl -u katha-worker -f
+# After each deployment: php bin/console messenger:stop-workers   (systemd restarts the worker
+# with the new code; the cron fallback keeps working even if this service is not installed).
+
+[Unit]
+Description=Katha platform worker (narration, Facebook posts, scheduled publishing)
+After=network.target mysql.service mariadb.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/katha
+Environment=APP_ENV=prod
+# "async" = Doctrine-backed job queue, "scheduler_default" = recurring tasks (see src/Scheduler/MainSchedule.php).
+ExecStart=/usr/bin/php bin/console messenger:consume async scheduler_default --time-limit=3600 --memory-limit=256M --no-interaction
+Restart=always
+RestartSec=5
+# Audio generation runs FFmpeg / the TTS engine as child processes.
+TimeoutStopSec=330
+KillMode=mixed
+Nice=5
+
+[Install]
+WantedBy=multi-user.target

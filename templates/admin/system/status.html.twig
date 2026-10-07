@@ -1,0 +1,42 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}System status{% endblock %}
+{% block breadcrumbs %}<li><span aria-current="page">System status</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div><h1>System status</h1><p>Health of the single-server installation. Secret values are never displayed.</p></div>
+    <div class="actions">
+        {{ ui.post_button(path('admin_system_recheck'), 'Re-check binaries', {icon: 'refresh', class: 'btn btn-sm'}) }}
+        <a class="btn btn-sm" href="{{ path('admin_system_failed') }}">{{ icon('alert-triangle', 'icon-sm') }} Failed jobs</a>
+    </div>
+</div>
+
+<div class="panel-grid even">
+    {% for group, items in checks %}
+        <section class="card" aria-labelledby="g-{{ loop.index }}">
+            <div class="card-header"><h2 id="g-{{ loop.index }}">{{ group }}</h2></div>
+            <ul class="check-list">
+                {% for c in items %}
+                    <li>
+                        {{ ui.check_icon(c.status) }}
+                        <span><strong>{{ c.label }}</strong> <span class="visually-hidden">({{ c.status }})</span><br><span class="check-value">{{ c.value }}</span></span>
+                        {% if c.help %}<span class="check-help">{{ c.help }}</span>{% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </section>
+    {% endfor %}
+
+    <section class="card" aria-labelledby="run-title">
+        <div class="card-header"><h2 id="run-title">Run a job now</h2></div>
+        <div class="card-body stack">
+            <p class="text-sm text-muted mb-0">Normally run by cron (<code>php bin/console app:cron:run</code> every minute) or the scheduler worker. Jobs are locked, so running one here never overlaps with cron.</p>
+            <div class="cluster">
+                {% for t in tasks %}{{ ui.post_button(path('admin_system_run', {task: t}), t, {icon: 'refresh', class: 'btn btn-sm'}) }}{% endfor %}
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

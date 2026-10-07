@@ -1,0 +1,84 @@
+# English UI strings of the public site (/en). Hindi: messages.hi.yaml — keep both files in sync
+# (same keys, same %placeholders%); tests/Unit/I18n/TranslationCatalogueTest checks it.
+# Editorial content (stories, pages, taxonomy names) is NOT translated here: it lives in the database
+# with optional English fields (titleEn, bodyEn, ...).
+
+lang:
+    switcher: Language
+    name:
+        hi: हिंदी
+        en: English
+    short:
+        hi: हि
+        en: EN
+
+taxonomy:
+    category:
+        singular: Category
+        plural: Categories
+    deity:
+        singular: Deity
+        plural: Deities
+    scripture:
+        singular: Scripture
+        plural: Scriptures
+    series:
+        singular: Series
+        plural: Story series
+    festival:
+        singular: Festival
+        plural: Festivals
+    tag:
+        singular: Tag
+        plural: Tags
+
+seo:
+    home: Home
+    stories: Stories
+    page_number: 'Page %page%'
+    taxonomy_title: '%name% — %type%'
+    taxonomy_description: 'Read and listen to stories related to %name%.'
+    collection_title: '%name% — Collection'
+    collection_description: A collection of stories
+
+format:
+    minutes: '%minutes% min'
+    hours_minutes: '%hours% hr %minutes% min'
+
+i18n:
+    # Shown on English pages whose content has no English version yet (the Hindi original is shown).
+    story_not_translated: This story is not yet available in English. The original Hindi text is shown below.
+    page_not_translated: This page is not yet available in English. The original Hindi text is shown below.
+    read_in_hindi: Read in Hindi
+    hindi_original: Hindi original
+
+# Shared by several templates.
+common:
+    read_minutes: '%minutes% min read'
+    source_verified: Source verified
+    demo_content: Demo content
+    audio_duration: Audio length
+    stories_count: '{1}%count% story|[0,Inf[%count% stories'
+    all_stories: All stories
+    close: Close
+
+# Public labels of App\Enum\SourceType: ('source_type.' ~ story.sourceType.value ~ '.label')|trans
+source_type:
+    direct_translation:
+        label: Direct scripture translation
+        description: This is a translation of the original scripture text.
+    scripture_adaptation:
+        label: Adaptation of scripture
+        description: This story is based on the original scripture, retold in simpler language.
+    traditional_narrative:
+        label: Traditional narrative
+        description: This story has been passed down through tradition; its versions may differ between sources.
+    folk_tradition:
+        label: Folk tradition
+        description: This story is current in folk tradition; it need not appear in any single scripture.
+    commentary:
+        label: Commentary
+        description: This is an explanation of a scripture or an episode.
+    original_editorial:
+        label: Original editorial content
+        description: This content was written by our editorial team.

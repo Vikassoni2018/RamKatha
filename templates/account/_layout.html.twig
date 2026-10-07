@@ -1,0 +1,31 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+{% set current = canonical_route() %}
+<div class="container account-layout">
+    <nav class="account-nav" aria-label="{{ 'account.nav.label'|trans }}">
+        <a href="{{ path('app_account') }}" {% if current == 'app_account' %}aria-current="page"{% endif %}>{{ icon('home', 'icon-sm') }} {{ 'account.nav.dashboard'|trans }}</a>
+        <a href="{{ path('app_account_bookmarks') }}" {% if current == 'app_account_bookmarks' %}aria-current="page"{% endif %}>{{ icon('bookmark', 'icon-sm') }} {{ 'account.nav.bookmarks'|trans }}</a>
+        <a href="{{ path('app_collection_index') }}" {% if current starts with 'app_collection' %}aria-current="page"{% endif %}>{{ icon('folder', 'icon-sm') }} {{ 'account.nav.collections'|trans }}</a>
+        <a href="{{ path('app_account_history') }}" {% if current == 'app_account_history' %}aria-current="page"{% endif %}>{{ icon('clock', 'icon-sm') }} {{ 'account.nav.history'|trans }}</a>
+        <a href="{{ path('app_account_profile') }}" {% if current == 'app_account_profile' %}aria-current="page"{% endif %}>{{ icon('user', 'icon-sm') }} {{ 'account.nav.profile'|trans }}</a>
+        <a href="{{ path('app_account_password') }}" {% if current == 'app_account_password' %}aria-current="page"{% endif %}>{{ icon('lock', 'icon-sm') }} {{ 'account.nav.password'|trans }}</a>
+    </nav>
+    <div>
+        {% if app.user and not app.user.verified %}
+            <div class="alert alert-warning" role="status">
+                {{ icon('mail') }}
+                <div class="alert-content">
+                    <p class="alert-title">{{ 'account.verify_notice.title'|trans }}</p>
+                    <p>{{ 'account.verify_notice.text'|trans({'%email%': app.user.email}) }}</p>
+                    <form method="post" action="{{ path('app_verify_email_resend') }}">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                        <button type="submit" class="link-button">{{ 'account.verify_notice.resend'|trans }}</button>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+        {% block account_body %}{% endblock %}
+    </div>
+</div>
+{% endblock %}

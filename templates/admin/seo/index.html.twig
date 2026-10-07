@@ -1,0 +1,37 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}SEO{% endblock %}
+{% block breadcrumbs %}<li><span aria-current="page">SEO</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div><h1>SEO</h1><p>Site-wide defaults are in <a href="{{ is_granted('ROLE_SUPER_ADMIN') ? path('admin_settings', {group: 'seo'}) : '#' }}">Settings → SEO</a>. Every story has its own title, description, canonical, robots and social image fields.</p></div>
+    <div class="actions">{{ ui.post_button(path('admin_seo_refresh'), 'Rebuild sitemaps & caches', {icon: 'refresh', class: 'btn btn-sm'}) }}</div>
+</div>
+
+<div class="stat-grid">
+    <a class="stat-card" href="{{ sitemapUrl }}" target="_blank" rel="noopener"><span class="stat-label">{{ icon('globe', 'icon-sm') }} Sitemap index</span><span class="stat-value">sitemap.xml</span><span class="stat-sub">{{ sitemapUrl }}</span></a>
+    <a class="stat-card" href="{{ robotsUrl }}" target="_blank" rel="noopener"><span class="stat-label">{{ icon('file-text', 'icon-sm') }} robots.txt</span><span class="stat-value">robots.txt</span><span class="stat-sub">{{ robotsUrl }}</span></a>
+    <div class="stat-card {{ issues is empty ? 'is-success' : 'is-warning' }}"><span class="stat-label">Published stories checked</span><span class="stat-value">{{ checked }}</span><span class="stat-sub">{{ issues|length }} with suggestions</span></div>
+</div>
+
+<section class="card" aria-labelledby="issues-title">
+    <div class="card-header"><h2 id="issues-title">{{ icon('alert-triangle', 'icon-sm') }} Suggestions</h2></div>
+    {% if issues is not empty %}
+        <table class="admin-table">
+            <thead><tr><th>Story</th><th>Suggestions</th></tr></thead>
+            <tbody>
+                {% for i in issues %}
+                    <tr>
+                        <td class="cell-main" data-label="Story"><a class="cell-title" href="{{ path('admin_story_edit', {id: i.id}) }}#sec-seo">{{ i.title }}</a></td>
+                        <td data-label="Suggestions"><ul class="mb-0">{% for p in i.problems %}<li class="text-sm">{{ p }}</li>{% endfor %}</ul></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="card-body"><p class="text-muted mb-0">No suggestions — every published story has complete SEO metadata.</p></div>
+    {% endif %}
+</section>
+{% endblock %}

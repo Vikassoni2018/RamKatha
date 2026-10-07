@@ -1,0 +1,58 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}TTS queue{% endblock %}
+{% block breadcrumbs %}<li><a href="{{ path('admin_audio_index') }}">Audio</a></li><li><span aria-current="page">TTS queue</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div><h1>TTS queue</h1><p>Jobs are processed by <code>messenger:consume async</code> or the cron fallback. {{ pendingMessages is not null ? pendingMessages ~ ' message(s) waiting in the queue.' : '' }}</p></div>
+</div>
+{% if unavailable %}
+    {% include 'partials/_alert.html.twig' with {type: 'warning', title: 'Feature is not configured', message: unavailable} only %}
+{% endif %}
+
+<section class="card mb-6" aria-labelledby="q-title">
+    <div class="card-header"><h2 id="q-title">{{ icon('clock', 'icon-sm') }} Waiting / processing ({{ queue|length }})</h2></div>
+    {% if queue is not empty %}
+        <table class="admin-table">
+            <thead><tr><th>#</th><th>Story</th><th>Status</th><th>Queued</th><th>Started</th></tr></thead>
+            <tbody>
+                {% for a in queue %}
+                    <tr>
+                        <td data-label="#">{{ a.id }}</td>
+                        <td class="cell-main" data-label="Story"><a class="cell-title" href="{{ path('admin_story_edit', {id: a.story.id}) }}">{{ a.story.title }}</a></td>
+                        <td data-label="Status">{{ ui.status_badge(a.status) }}</td>
+                        <td data-label="Queued">{{ a.createdAt|ago }}</td>
+                        <td data-label="Started">{{ a.generationStartedAt ? a.generationStartedAt|ago : '—' }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="card-body"><p class="text-muted mb-0">The queue is empty.</p></div>
+    {% endif %}
+</section>
+
+<section class="card" aria-labelledby="f-title">
+    <div class="card-header"><h2 id="f-title">{{ icon('alert-triangle', 'icon-sm') }} Recent failures</h2></div>
+    {% if failed|length > 0 %}
+        <table class="admin-table">
+            <thead><tr><th>#</th><th>Story</th><th>Error</th><th class="num">Attempts</th><th class="cell-actions"><span class="visually-hidden">Actions</span></th></tr></thead>
+            <tbody>
+                {% for a in failed %}
+                    <tr>
+                        <td data-label="#">{{ a.id }}</td>
+                        <td class="cell-main" data-label="Story"><a class="cell-title" href="{{ path('admin_story_edit', {id: a.story.id}) }}">{{ a.story.title }}</a><span class="cell-sub">{{ a.updatedAt|ago }}</span></td>
+                        <td data-label="Error"><span class="text-sm">{{ a.errorMessage|truncate_words(220) }}</span></td>
+                        <td class="num" data-label="Attempts">{{ a.attempts }}</td>
+                        <td class="cell-actions">{% if not unavailable %}{{ ui.post_button(path('admin_audio_retry', {id: a.id}), 'Retry', {icon: 'refresh', class: 'btn btn-ghost btn-sm'}) }}{% endif %}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="card-body"><p class="text-muted mb-0">No failed jobs. 🙏</p></div>
+    {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="{% block html_lang %}{{ app.locale }}{% endblock %}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    {%- set seo = seo is defined ? seo : null %}
+    <title>{% block title %}{{ seo ? seo.title : setting('site_name') }}{% endblock %}</title>
+    {% block seo %}{% include 'partials/_seo.html.twig' %}{% endblock %}
+    <meta name="theme-color" content="#7a1f2b">
+    <meta name="csrf-token" content="{{ csrf_token('api') }}">
+    {% set favicon = media_by_id(setting('favicon_media_id')) %}
+    {% if favicon %}
+        <link rel="icon" href="{{ media_url(favicon, 'thumb') }}">
+    {% else %}
+        <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    {% endif %}
+    <link rel="apple-touch-icon" href="{{ asset('apple-touch-icon.png') }}">
+    {% block stylesheets %}
+        {% for sheet in ['tokens', 'base', 'components', 'layout', 'story', 'player', 'pages'] %}
+            <link rel="stylesheet" href="{{ asset('styles/' ~ sheet ~ '.css') }}" data-turbo-track="reload">
+        {% endfor %}
+    {% endblock %}
+    <meta name="csp-nonce" content="{{ csp_nonce() }}">
+    {% block importmap %}{{ importmap('app', {nonce: csp_nonce()}) }}{% endblock %}
+    {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}"
+      data-analytics="{{ features.analyticsEnabled ? 1 : 0 }}"
+      data-analytics-url="{{ path('api_analytics_events') }}"
+      data-login-url="{{ path('app_login') }}">
+    <a class="skip-link" href="#main">{{ 'layout.skip_to_content'|trans }}</a>
+
+    {% block header %}{% include 'partials/_header.html.twig' %}{% endblock %}
+
+    <main id="main" tabindex="-1">
+        {% block flash %}{% include 'partials/_flash.html.twig' %}{% endblock %}
+        {% block body %}{% endblock %}
+    </main>
+
+    {% block footer %}{% include 'partials/_footer.html.twig' %}{% endblock %}
+
+    {% include 'partials/_global_player.html.twig' %}
+    <div id="toast-region" class="toast-region" aria-live="polite"></div>
+    {# UI strings for the Stimulus controllers in the page language (assets/lib/i18n.js). #}
+    <script type="application/json" id="i18n-messages">{{ js_messages()|json_encode(constant('JSON_HEX_TAG') b-or constant('JSON_HEX_AMP') b-or constant('JSON_UNESCAPED_UNICODE'))|raw }}</script>
+
+    {% block json_ld %}
+        {% if seo and seo.jsonLd is not empty %}
+            <script type="application/ld+json">{{ seo.jsonLdScript|raw }}</script>
+        {% endif %}
+    {% endblock %}
+</body>
+</html>

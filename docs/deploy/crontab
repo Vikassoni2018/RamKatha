@@ -1,0 +1,15 @@
+# Crontab for the Katha platform (install for the web server user: crontab -u www-data docs/deploy/crontab)
+#
+# app:cron:run executes every periodic task whose interval has elapsed (publish scheduled stories,
+# retry audio, publish Facebook posts, aggregate analytics, daily maintenance). Each task runs under a
+# lock, so overlapping runs and a parallel Messenger worker are safe.
+#
+# WITH a long-running worker (systemd/supervisor, recommended):
+* * * * * cd /var/www/katha && /usr/bin/php bin/console app:cron:run --env=prod --no-interaction >> var/log/cron.log 2>&1
+#
+# WITHOUT a worker (shared hosting): also process queued jobs (audio, Facebook) for up to 50 s per minute.
+# Use this line INSTEAD of the one above:
+# * * * * * cd /var/www/katha && /usr/bin/php bin/console app:cron:run --consume=50 --env=prod --no-interaction >> var/log/cron.log 2>&1
+#
+# Nightly database + media backup (see docs/deploy/backup.sh; make it executable once: chmod +x docs/deploy/backup.sh).
+30 2 * * * /var/www/katha/docs/deploy/backup.sh >> /var/www/katha/var/log/backup.log 2>&1

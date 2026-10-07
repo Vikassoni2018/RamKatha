@@ -1,0 +1,49 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}Users{% endblock %}
+{% block breadcrumbs %}<li><span aria-current="page">Users</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div><h1>Users</h1><p>{{ users.totalItems }} account(s)</p></div>
+    <div class="actions">{% if is_granted('ROLE_SUPER_ADMIN') %}<a class="btn btn-primary btn-sm" href="{{ path('admin_user_new') }}">{{ icon('plus', 'icon-sm') }} New staff account</a>{% endif %}</div>
+</div>
+
+<form class="filter-bar" method="get" data-controller="autosubmit">
+    <div class="form-group grow"><label class="form-label" for="uq">Search</label><input id="uq" class="form-control" type="search" name="q" value="{{ app.request.query.get('q') }}" placeholder="Name or email…"></div>
+    <div class="form-group"><label class="form-label" for="ur">Role</label>
+        <select id="ur" class="form-select" name="role" data-action="change->autosubmit#submit"><option value="">Any</option>{% for r, d in constant('App\\Security\\Role::ASSIGNABLE') %}<option value="{{ r }}" {% if role == r %}selected{% endif %}>{{ role_label(r) }}</option>{% endfor %}</select>
+    </div>
+    <div class="form-group"><label class="form-label" for="us">State</label>
+        <select id="us" class="form-select" name="state" data-action="change->autosubmit#submit">
+            <option value="">Any</option>
+            {% for k, l in {active: 'Active', inactive: 'Deactivated', unverified: 'Email not verified'} %}<option value="{{ k }}" {% if app.request.query.get('state') == k %}selected{% endif %}>{{ l }}</option>{% endfor %}
+        </select>
+    </div>
+    <div class="actions"><button class="btn btn-primary btn-sm">Filter</button></div>
+</form>
+
+{% if users|length > 0 %}
+    <div class="admin-table-card">
+        <table class="admin-table">
+            <thead><tr><th>User</th><th>Roles</th><th>Status</th><th>Joined</th><th>Last login</th><th class="cell-actions"><span class="visually-hidden">Actions</span></th></tr></thead>
+            <tbody>
+                {% for u in users %}
+                    <tr>
+                        <td class="cell-main" data-label="User"><a class="cell-title" href="{{ path('admin_user_edit', {id: u.id}) }}">{{ u.displayName }}</a><span class="cell-sub">{{ u.email }}</span></td>
+                        <td data-label="Roles">{% for r in u.assignedRoles %}<span class="badge badge-primary">{{ role_label(r) }}</span> {% else %}<span class="text-subtle">Reader</span>{% endfor %}</td>
+                        <td data-label="Status">{% if not u.active %}<span class="badge badge-danger">Deactivated</span>{% elseif u.verified %}<span class="badge badge-success">Verified</span>{% else %}<span class="badge badge-warning">Unverified</span>{% endif %}</td>
+                        <td data-label="Joined">{{ u.createdAt|local_datetime('d M Y') }}</td>
+                        <td data-label="Last login">{{ u.lastLoginAt ? u.lastLoginAt|ago : '—' }}</td>
+                        <td class="cell-actions"><a class="btn btn-ghost btn-sm" href="{{ path('admin_user_edit', {id: u.id}) }}">{{ icon('edit', 'icon-sm') }} Manage</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="table-footer"><span>{{ users.firstItemNumber }}–{{ users.lastItemNumber }} of {{ users.totalItems }}</span><twig:Pagination :paginator="users" :summary="false" label="Pagination" previous="Previous" next="Next" /></div>
+    </div>
+{% else %}
+    {{ ui.empty('users', 'No users found', 'Try different filters.') }}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="container auth-wrap">
+    <div class="card auth-card">
+        <div class="card-body">
+            <h1>{{ 'auth.login.title'|trans }}</h1>
+            <p class="lead">{{ 'auth.login.lead'|trans }}</p>
+
+            {% if error %}
+                {# Symfony's generic "Invalid credentials." gets our own wording; other messages are keys of the "security" domain. #}
+                {% include 'partials/_alert.html.twig' with {type: 'error', message: error.messageKey == 'Invalid credentials.' ? 'auth.invalid_credentials'|trans({}, 'security') : error.messageKey|trans(error.messageData, 'security')} only %}
+            {% endif %}
+
+            {# Full page submit so the persistent player re-renders with the logged-in state. #}
+            <form method="post" action="{{ path('app_login') }}" data-turbo="false" novalidate>
+                <div class="form-group">
+                    <label class="form-label" for="login-email">{{ 'auth.login.email'|trans }}</label>
+                    <input id="login-email" class="form-control" type="email" name="email" value="{{ last_username }}" autocomplete="email" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="login-password">{{ 'auth.login.password'|trans }}</label>
+                    <input id="login-password" class="form-control" type="password" name="password" autocomplete="current-password" required>
+                </div>
+                <div class="flex-between">
+                    <label class="form-check mb-0" for="remember-me">
+                        <input id="remember-me" type="checkbox" name="_remember_me" value="on">
+                        <span>{{ 'auth.login.remember_me'|trans }}</span>
+                    </label>
+                    <a class="text-sm" href="{{ path('app_forgot_password') }}">{{ 'auth.login.forgot_password'|trans }}</a>
+                </div>
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}" data-controller="csrf-protection">
+                <input type="hidden" name="_target_path" value="{{ target_path }}">
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-block btn-lg">{{ icon('log-in') }} {{ 'auth.login.submit'|trans }}</button>
+                </div>
+            </form>
+
+            {% if features.registrationEnabled %}
+                <p class="auth-footer">{{ 'auth.login.new_here'|trans }} <a href="{{ path('app_register') }}">{{ 'auth.login.register_link'|trans }}</a></p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

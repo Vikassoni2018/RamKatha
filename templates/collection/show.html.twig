@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="container container-reading">
+    <header class="page-hero">
+        <span class="eyebrow">{{ icon('folder', 'icon-sm') }} {{ 'collection.show.eyebrow'|trans }} · {{ collection.visibility.translationKey|trans }}</span>
+        <h1 data-user-content>{{ collection.name }}</h1>
+        {% if collection.description %}<p class="lead" data-user-content>{{ collection.description }}</p>{% endif %}
+        <p class="text-sm text-muted mb-0">{{ 'common.stories_count'|trans({'%count%': items|length}) }}{% if not isOwner %} · <span data-user-content>{{ 'collection.show.by'|trans({'%name%': collection.user.displayName}) }}</span>{% endif %}</p>
+    </header>
+
+    {% if isOwner %}
+        <div class="cluster mb-6">
+            <a class="btn btn-sm" href="{{ path('app_collection_edit', {uuid: collection.uuid.toRfc4122}) }}">{{ icon('edit', 'icon-sm') }} {{ 'collection.show.edit'|trans }}</a>
+            <form method="post" action="{{ path('app_collection_delete', {uuid: collection.uuid.toRfc4122}) }}"
+                  data-controller="confirm" data-confirm-message-value="{{ 'collection.show.delete_confirm'|trans }}" data-confirm-title-value="{{ 'collection.show.delete_title'|trans }}" data-confirm-confirm-label-value="{{ 'collection.show.delete'|trans }}" data-confirm-cancel-label-value="{{ 'account.cancel'|trans }}" data-confirm-danger-value="true" data-action="submit->confirm#ask">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                <button type="submit" class="btn btn-sm btn-danger-outline">{{ icon('trash', 'icon-sm') }} {{ 'collection.show.delete'|trans }}</button>
+            </form>
+        </div>
+    {% endif %}
+
+    {% if items is not empty %}
+        {% if isOwner %}
+            <p class="text-sm text-muted">{{ 'collection.show.reorder_hint'|trans }}</p>
+            <ol class="sortable-list" data-controller="sortable" data-sortable-url-value="{{ path('api_collection_order', {uuid: collection.uuid.toRfc4122}) }}">
+                {% for item in items %}
+                    {% set s = item.story %}
+                    {% set story_title = s|localized('title') %}
+                    <li class="sortable-item" draggable="true" data-sortable-target="item" data-uuid="{{ s.uuid.toRfc4122 }}"
+                        data-action="dragstart->sortable#dragstart dragover->sortable#dragover dragend->sortable#dragend">
+                        <span class="sortable-handle" aria-hidden="true">{{ icon('grip') }}</span>
+                        <twig:Cover :media="s.coverImage" variant="thumb" />
+                        <div class="sortable-item-body">
+                            <a href="{{ path('app_story_show', {slug: s.slug}) }}"{{ lang_attr(s, 'title') }}>{{ story_title }}</a>
+                            <span class="text-xs text-muted">{{ 'format.minutes'|trans({'%minutes%': s.readingTimeMinutesFor(app.locale)}) }}{% if s.hasPlayableAudio %} · {{ icon('headphones', 'icon-sm') }} {{ s.audioDurationSeconds|duration }}{% endif %}</span>
+                        </div>
+                        <div class="sortable-item-actions">
+                            <button type="button" class="btn btn-ghost btn-icon btn-sm" aria-label="{{ 'collection.show.move_up'|trans({'%title%': story_title}) }}" data-action="sortable#up">{{ icon('chevron-up', 'icon-sm') }}</button>
+                            <button type="button" class="btn btn-ghost btn-icon btn-sm" aria-label="{{ 'collection.show.move_down'|trans({'%title%': story_title}) }}" data-action="sortable#down">{{ icon('chevron-down', 'icon-sm') }}</button>
+                            <form method="post" action="{{ path('app_collection_remove_item', {uuid: collection.uuid.toRfc4122, story: s.uuid.toRfc4122}) }}">
+                                <input type="hidden" name="_csrf_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                                <button type="submit" class="btn btn-ghost btn-icon btn-sm" aria-label="{{ 'collection.show.remove_item'|trans({'%title%': story_title}) }}">{{ icon('close', 'icon-sm') }}</button>
+                            </form>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ol>
+        {% else %}
+            <div class="grid grid-cards">
+                {% for item in items %}<twig:StoryCard :story="item.story" :headingLevel="2" />{% endfor %}
+            </div>
+        {% endif %}
+    {% else %}
+        <twig:EmptyState icon="folder" :title="'collection.show.empty_title'|trans" :text="'collection.show.empty_text'|trans" :actionUrl="path('app_story_index')" :actionLabel="'account.browse_stories'|trans" />
+    {% endif %}
+</div>
+{% endblock %}

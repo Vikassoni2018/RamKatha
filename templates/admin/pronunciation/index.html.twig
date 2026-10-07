@@ -1,0 +1,52 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}Pronunciation dictionary{% endblock %}
+{% block breadcrumbs %}<li><a href="{{ path('admin_audio_index') }}">Audio</a></li><li><span aria-current="page">Pronunciation</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div><h1>Pronunciation dictionary</h1><p>Corrections applied to the text before narration — highest priority first, then oldest first.</p></div>
+    <div class="actions"><a class="btn btn-primary btn-sm" href="{{ path('admin_pronunciation_new') }}">{{ icon('plus', 'icon-sm') }} Add rule</a></div>
+</div>
+
+<div class="panel-grid">
+    <div>
+        <form class="filter-bar" method="get">
+            <div class="form-group grow"><label class="form-label" for="pq">Search</label><input id="pq" class="form-control" type="search" name="q" value="{{ app.request.query.get('q') }}"></div>
+            <div class="form-group"><label class="form-label" for="pl">Language</label>
+                <select id="pl" class="form-select" name="language"><option value="">All</option>{% for code in ['hi', 'sa', 'en'] %}<option value="{{ code }}" {% if app.request.query.get('language') == code %}selected{% endif %}>{{ code }}</option>{% endfor %}</select>
+            </div>
+            <div class="actions"><button class="btn btn-primary btn-sm">Filter</button></div>
+        </form>
+        {% if rules|length > 0 %}
+            <div class="admin-table-card">
+                <table class="admin-table">
+                    <thead><tr><th>Written</th><th>Spoken as</th><th>Lang</th><th class="num">Priority</th><th>Options</th><th class="cell-actions"><span class="visually-hidden">Actions</span></th></tr></thead>
+                    <tbody>
+                        {% for r in rules %}
+                            <tr>
+                                <td class="cell-main" data-label="Written"><a class="cell-title" href="{{ path('admin_pronunciation_edit', {id: r.id}) }}">{{ r.sourceText }}</a>{% if r.notes %}<span class="cell-sub">{{ r.notes|truncate_words(80) }}</span>{% endif %}</td>
+                                <td data-label="Spoken as">{{ r.replacementText ?: '∅ (removed)' }}</td>
+                                <td data-label="Lang">{{ r.language }}</td>
+                                <td class="num" data-label="Priority">{{ r.priority }}</td>
+                                <td data-label="Options">{% if not r.enabled %}<span class="badge badge-muted">disabled</span>{% endif %}{% if r.wholeWord %}<span class="badge">whole word</span>{% endif %}{% if r.caseSensitive %}<span class="badge">case</span>{% endif %}</td>
+                                <td class="cell-actions">
+                                    <a class="btn btn-ghost btn-sm" href="{{ path('admin_pronunciation_edit', {id: r.id}) }}">{{ icon('edit', 'icon-sm') }}<span class="visually-hidden">Edit</span></a>
+                                    {{ ui.post_button(path('admin_pronunciation_delete', {id: r.id}), 'Delete', {icon: 'trash', class: 'btn btn-ghost btn-sm', confirm: 'Delete this rule?', danger: true, title: 'Delete rule'}) }}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <div class="table-footer"><span>{{ rules.totalItems }} rule(s)</span><twig:Pagination :paginator="rules" :summary="false" label="Pagination" previous="Previous" next="Next" /></div>
+            </div>
+        {% else %}
+            {{ ui.empty('mic', 'No pronunciation rules yet', 'Add rules for words the TTS engine mispronounces, e.g. श्रीकृष्ण → श्री कृष्ण.', path('admin_pronunciation_new'), 'Add rule') }}
+        {% endif %}
+    </div>
+    <aside>
+        <twig:PronunciationPreview />
+    </aside>
+</div>
+{% endblock %}

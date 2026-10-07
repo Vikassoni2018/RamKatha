@@ -1,0 +1,57 @@
+{% import 'admin/_macros.html.twig' as ui %}
+{% set pipeline = enum('App\\Enum\\StoryStatus').pipeline() %}
+{% set currentIndex = null %}
+{% for s in pipeline %}{% if s == story.status %}{% set currentIndex = loop.index0 %}{% endif %}{% endfor %}
+
+<section class="card" aria-labelledby="wf-title">
+    <div class="card-header"><h2 id="wf-title">{{ icon('shield-check', 'icon-sm') }} Editorial workflow</h2></div>
+    <div class="card-body stack">
+        <ol class="timeline" aria-label="Workflow stages">
+            {% for s in pipeline %}
+                {% set state = currentIndex is not null and loop.index0 < currentIndex ? 'is-done' : (s == story.status ? 'is-current' : '') %}
+                <li class="{{ state }}" {% if s == story.status %}aria-current="step"{% endif %}>{{ s.label }}</li>
+            {% endfor %}
+            {% if story.status.value == 'archived' %}<li class="is-current" aria-current="step">Archived</li>{% endif %}
+        </ol>
+
+        <dl class="kv">
+            <dt>Source</dt><dd>{{ ui.status_badge(story.verificationStatus) }}</dd>
+            {% if story.sourceVerifiedAt %}<dt>Verified</dt><dd>{{ story.sourceVerifiedAt|local_datetime }} by {{ story.sourceVerifiedBy.displayName }}</dd>{% endif %}
+            {% if story.reviewedAt %}<dt>Last review</dt><dd>{{ story.reviewedAt|local_datetime }}{% if story.reviewedBy %} · {{ story.reviewedBy.displayName }}{% endif %}</dd>{% endif %}
+            {% if story.reviewNotes %}<dt>Notes</dt><dd class="notes-text">{{ story.reviewNotes }}</dd>{% endif %}
+            {% if story.scheduledAt %}<dt>Scheduled</dt><dd>{{ story.scheduledAt|local_datetime }} <span class="text-subtle">{{ app_timezone }}</span></dd>{% endif %}
+            {% if story.publishedAt %}<dt>Published</dt><dd>{{ story.publishedAt|local_datetime }}</dd>{% endif %}
+        </dl>
+
+        {% if transitions is not empty %}
+            <div class="stack-sm">
+                {% for t in transitions %}
+                    <form method="post" action="{{ path('admin_story_transition', {id: story.id, transition: t.value}) }}" class="stack-sm"
+                          {% if t.requiresConfirmation %}data-controller="confirm" data-confirm-title-value="{{ t.label }}" data-confirm-message-value="{{ t.label }}: “{{ story.title }}”?" data-confirm-confirm-label-value="{{ t.label }}" data-confirm-danger-value="{{ t.buttonVariant == 'danger-outline' ? 'true' : 'false' }}" data-action="submit->confirm#ask"{% endif %}>
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                        {% if t.value in ['verify_source', 'request_changes', 'approve'] %}
+                            <label class="visually-hidden" for="notes-{{ t.value }}">Notes for “{{ t.label }}”</label>
+                            <textarea id="notes-{{ t.value }}" name="notes" class="form-control" rows="2" placeholder="{{ t.value == 'request_changes' ? 'What needs to change?' : 'Review notes (optional)' }}"></textarea>
+                        {% endif %}
+                        {% if t.value == 'schedule' %}
+                            <label class="form-label" for="sched-at">Publish at ({{ app_timezone }})</label>
+                            <input id="sched-at" type="datetime-local" name="scheduledAt" class="form-control" required value="{{ story.scheduledAt ? story.scheduledAt|local_datetime('Y-m-d\\TH:i') : '' }}">
+                        {% endif %}
+                        <button type="submit" class="btn btn-{{ t.buttonVariant }} btn-block btn-sm">{{ t.label }}</button>
+                    </form>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-sm text-muted mb-0">No workflow actions available for you at this stage.</p>
+        {% endif %}
+
+        {% if canReverify %}
+            <form method="post" action="{{ path('admin_story_verify', {id: story.id}) }}" class="stack-sm">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                <p class="text-xs text-muted mb-0">Content or sources changed after verification. Re-verify without changing the status:</p>
+                <textarea name="notes" class="form-control" rows="2" placeholder="Verification notes (optional)" aria-label="Verification notes"></textarea>
+                <button type="submit" class="btn btn-secondary btn-sm btn-block">{{ icon('shield-check', 'icon-sm') }} Re-verify sources</button>
+            </form>
+        {% endif %}
+    </div>
+</section>

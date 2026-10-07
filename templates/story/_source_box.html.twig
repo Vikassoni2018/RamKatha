@@ -1,0 +1,54 @@
+{# Visible source & authenticity information. The verified badge appears only after explicit review. #}
+{# Citation details (volume, chapter, ...) are shown as entered, i.e. in the story's language. #}
+{% set citeLang = app.locale != story.language ? story.language : null %}
+<section class="source-box" aria-labelledby="sources-title">
+    <div class="source-box-header">
+        <h2 id="sources-title">{{ icon('book') }} {{ 'source.title'|trans }}</h2>
+        {% if story.isSourceVerified %}
+            <span class="badge badge-verified">{{ icon('shield-check') }} {{ 'common.source_verified'|trans }}</span>
+        {% else %}
+            <span class="badge badge-neutral">{{ 'source.verification_pending'|trans }}</span>
+        {% endif %}
+    </div>
+
+    <div class="source-type">
+        <strong>{{ ('source_type.' ~ story.sourceType.value ~ '.label')|trans }}</strong>
+        <span>{{ ('source_type.' ~ story.sourceType.value ~ '.description')|trans }}</span>
+    </div>
+
+    {% if story.sourceReferences is not empty %}
+        <ol class="source-refs">
+            {% for ref in story.sourceReferences %}
+                <li class="source-ref">
+                    <div class="source-ref-title"{{ lang_attr(ref, 'displayTitle') }}>
+                        {% if ref.scripture %}
+                            <a href="{{ path('app_taxonomy_show', {segment: 'granth', slug: ref.scripture.slug}) }}">{{ ref|localized('displayTitle') }}</a>
+                        {% else %}
+                            {{ ref|localized('displayTitle') }}
+                        {% endif %}
+                    </div>
+                    <dl>
+                        {% if ref.volume %}<dt>{{ 'source.volume'|trans }}</dt><dd{% if citeLang %} lang="{{ citeLang }}"{% endif %}>{{ ref.volume }}</dd>{% endif %}
+                        {% if ref.chapter %}<dt>{{ 'source.chapter'|trans }}</dt><dd{% if citeLang %} lang="{{ citeLang }}"{% endif %}>{{ ref.chapter }}</dd>{% endif %}
+                        {% if ref.section %}<dt>{{ 'source.section'|trans }}</dt><dd{% if citeLang %} lang="{{ citeLang }}"{% endif %}>{{ ref.section }}</dd>{% endif %}
+                        {% if ref.verseReferences %}<dt>{{ 'source.verses'|trans }}</dt><dd{% if citeLang %} lang="{{ citeLang }}"{% endif %}>{{ ref.verseReferences }}</dd>{% endif %}
+                        {% if ref.edition %}<dt>{{ 'source.edition'|trans }}</dt><dd{% if citeLang %} lang="{{ citeLang }}"{% endif %}>{{ ref.edition }}</dd>{% endif %}
+                        {% if ref.translator %}<dt>{{ 'source.translator'|trans }}</dt><dd{% if citeLang %} lang="{{ citeLang }}"{% endif %}>{{ ref.translator }}</dd>{% endif %}
+                        {% if ref.url %}<dt>{{ 'source.online'|trans }}</dt><dd><a href="{{ ref.url }}" rel="nofollow noopener noreferrer" target="_blank">{{ ref.url|truncate_words(60) }} {{ icon('external-link', 'icon-sm') }}</a></dd>{% endif %}
+                        {% if ref|localized('notes') %}<dt>{{ 'source.notes'|trans }}</dt><dd{{ lang_attr(ref, 'notes') }}>{{ ref|localized('notes') }}</dd>{% endif %}
+                    </dl>
+                </li>
+            {% endfor %}
+        </ol>
+    {% elseif story.scripture %}
+        <p class="mb-0 text-sm">{{ 'source.scripture_basis'|trans }} <a href="{{ path('app_taxonomy_show', {segment: 'granth', slug: story.scripture.slug}) }}"{{ lang_attr(story.scripture, 'name') }}>{{ story.scripture|localized('name') }}</a></p>
+    {% else %}
+        <p class="mb-0 text-sm text-muted">{{ 'source.no_references'|trans }}</p>
+    {% endif %}
+
+    {% if story|localized('sourceNotes') %}<p class="source-notes"{{ lang_attr(story, 'sourceNotes') }}>{{ story|localized('sourceNotes') }}</p>{% endif %}
+
+    {% if story.isSourceVerified %}
+        <p class="source-verification">{{ icon('shield-check', 'icon-sm') }} {{ 'source.reviewed_on'|trans({'%date%': story.sourceVerifiedAt|long_date}) }}</p>
+    {% endif %}
+</section>

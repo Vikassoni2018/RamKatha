@@ -1,0 +1,25 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="container">
+    <header class="page-hero">
+        <twig:Breadcrumbs :items="seo.breadcrumbs" />
+        <h1>{{ 'collection.public.title'|trans }}</h1>
+        <p class="lead">{{ 'collection.public.lead'|trans }}</p>
+    </header>
+    {% if collections|length > 0 %}
+        <div class="collection-list">
+            {% for c in collections %}
+                <article class="collection-card">
+                    <h2><a href="{{ path('app_collection_show', {uuid: c.uuid.toRfc4122}) }}" data-user-content>{{ c.name }}</a></h2>
+                    {% if c.description %}<p class="line-clamp-2" data-user-content>{{ c.description }}</p>{% endif %}
+                    <span class="text-xs text-muted"><span data-user-content>{{ c.user.displayName }}</span> · {{ c.updatedAt|long_date }}</span>
+                </article>
+            {% endfor %}
+        </div>
+        <twig:Pagination :paginator="collections" />
+    {% else %}
+        <twig:EmptyState icon="folder" :title="'collection.public.empty_title'|trans" :text="'collection.public.empty_text'|trans" :actionUrl="path('app_collection_new')" :actionLabel="'collection.public.empty_action'|trans" />
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+framework:
+    rate_limiter:
+        registration:
+            policy: sliding_window
+            limit: 5
+            interval: '1 hour'
+            cache_pool: cache.rate_limiter
+        password_reset:
+            policy: sliding_window
+            limit: 5
+            interval: '1 hour'
+            cache_pool: cache.rate_limiter
+        email_verification:
+            policy: sliding_window
+            limit: 5
+            interval: '1 hour'
+            cache_pool: cache.rate_limiter
+        contact_form:
+            policy: sliding_window
+            limit: 5
+            interval: '1 hour'
+            cache_pool: cache.rate_limiter
+        analytics:
+            policy: token_bucket
+            limit: 120
+            rate: { interval: '1 minute', amount: 60 }
+            cache_pool: cache.rate_limiter
+        donation:
+            policy: sliding_window
+            limit: 20
+            interval: '1 hour'
+            cache_pool: cache.rate_limiter
+        api_write:
+            policy: token_bucket
+            limit: 120
+            rate: { interval: '1 minute', amount: 60 }
+            cache_pool: cache.rate_limiter

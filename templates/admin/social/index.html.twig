@@ -1,0 +1,34 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}Social posts{% endblock %}
+{% block breadcrumbs %}<li><span aria-current="page">Social posts</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header"><div><h1>Social posts</h1><p>Create posts from a published story (editor → Social panel).</p></div></div>
+<nav class="cluster mb-4" aria-label="Filter">
+    <a class="chip {{ status is null ? 'is-active' }}" href="{{ path('admin_social_index') }}">All</a>
+    {% for s in enum('App\\Enum\\SocialPostStatus').cases() %}<a class="chip {{ status == s ? 'is-active' }}" href="{{ path('admin_social_index', {status: s.value}) }}">{{ s.label }} <span class="chip-count">{{ counts[s.value]|default(0) }}</span></a>{% endfor %}
+</nav>
+{% if posts|length > 0 %}
+    <div class="admin-table-card">
+        <table class="admin-table">
+            <thead><tr><th>Story</th><th>Status</th><th>Scheduled / published</th><th class="num">Attempts</th><th>Created</th></tr></thead>
+            <tbody>
+                {% for p in posts %}
+                    <tr>
+                        <td class="cell-main" data-label="Story"><a class="cell-title" href="{{ path('admin_social_edit', {id: p.id}) }}">{{ p.story.title }}</a><span class="cell-sub">{{ p.account.platform.label }}</span>{% if p.lastError %}<span class="cell-sub text-danger">{{ p.lastError|truncate_words(120) }}</span>{% endif %}</td>
+                        <td data-label="Status">{{ ui.status_badge(p.status) }}</td>
+                        <td data-label="When">{{ p.publishedAt ? p.publishedAt|local_datetime : (p.scheduledAt ? p.scheduledAt|local_datetime ~ ' (scheduled)' : '—') }}</td>
+                        <td class="num" data-label="Attempts">{{ p.attemptCount }}</td>
+                        <td data-label="Created">{{ p.createdAt|ago }}{% if p.createdBy %}<span class="cell-sub">{{ p.createdBy.displayName }}</span>{% endif %}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="table-footer"><span>{{ posts.totalItems }} post(s)</span><twig:Pagination :paginator="posts" :summary="false" label="Pagination" previous="Previous" next="Next" /></div>
+    </div>
+{% else %}
+    {{ ui.empty('send', 'No social posts yet', 'Open a published story and create a Facebook post from the Social panel.') }}
+{% endif %}
+{% endblock %}

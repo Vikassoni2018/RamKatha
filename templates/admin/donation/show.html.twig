@@ -1,0 +1,73 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}{{ donation.referenceCode }}{% endblock %}
+{% block breadcrumbs %}<li><a href="{{ path('admin_donation_index') }}">Contributions</a></li><li><span aria-current="page">{{ donation.referenceCode }}</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div><h1>{{ donation.referenceCode }} · {{ donation.amountPaise|money }}</h1><p>{{ ui.status_badge(donation.status) }} created {{ donation.createdAt|local_datetime }}</p></div>
+</div>
+
+{% if duplicates > 0 %}
+    {% include 'partials/_alert.html.twig' with {type: 'warning', title: 'Possible duplicate claim', message: 'The same UPI transaction reference was declared on ' ~ duplicates ~ ' other contribution(s). Check carefully before verifying.'} only %}
+{% endif %}
+
+<div class="panel-grid">
+    <section class="card">
+        <div class="card-header"><h2>Details</h2></div>
+        <div class="card-body">
+            <dl class="kv">
+                <dt>Amount</dt><dd>{{ donation.amountPaise|money(donation.currency, true) }}</dd>
+                <dt>Method</dt><dd>{{ donation.paymentMethod.label }}</dd>
+                <dt>UPI note (tn)</dt><dd><code>{{ donation.paymentNote }}</code></dd>
+                <dt>Transaction ref. (UTR)</dt><dd><code>{{ donation.upiTransactionReference ?: 'not provided' }}</code></dd>
+                <dt>Payment date</dt><dd>{{ donation.paymentDate ? donation.paymentDate|date('d M Y') : '—' }}</dd>
+                <dt>Declared</dt><dd>{{ donation.declaredAt ? donation.declaredAt|local_datetime : 'not declared' }}</dd>
+                <dt>Donor</dt><dd>{{ donation.donorName ?: '—' }}{% if donation.anonymous %} <span class="badge">wishes to stay anonymous</span>{% endif %}</dd>
+                <dt>Email / phone</dt><dd>{{ donation.email ?: '—' }} · {{ donation.phone ?: '—' }}</dd>
+                <dt>Account</dt><dd>{% if donation.user %}<a href="{{ path('admin_user_edit', {id: donation.user.id}) }}">{{ donation.user.email }}</a>{% else %}guest{% endif %}</dd>
+                <dt>Story</dt><dd>{% if donation.story %}<a href="{{ path('admin_story_edit', {id: donation.story.id}) }}">{{ donation.story.title }}</a>{% else %}general support{% endif %}</dd>
+                {% if donation.notes %}<dt>Message</dt><dd class="notes-text">{{ donation.notes }}</dd>{% endif %}
+                {% if donation.verifiedAt %}<dt>Verified</dt><dd>{{ donation.verifiedAt|local_datetime }} by {{ donation.verifiedBy ? donation.verifiedBy.displayName : '—' }}</dd>{% endif %}
+                {% if donation.rejectedAt %}<dt>Rejected</dt><dd>{{ donation.rejectedAt|local_datetime }} by {{ donation.rejectedBy ? donation.rejectedBy.displayName : '—' }}</dd>{% endif %}
+            </dl>
+        </div>
+    </section>
+
+    <aside class="stack">
+        {% if is_granted('DONATION_REVIEW', donation) %}
+            <section class="card">
+                <div class="card-header"><h2>Decision</h2></div>
+                <div class="card-body stack">
+                    <p class="text-sm text-muted mb-0">Verify only after finding this payment in the bank statement (match amount, date and UTR / reference code).</p>
+                    {% if donation.status.canTransitionTo(enum('App\\Enum\\DonationStatus').Verified) %}
+                        <form method="post" action="{{ path('admin_donation_verify', {id: donation.id}) }}" class="stack-sm" data-controller="confirm" data-confirm-title-value="Verify contribution" data-confirm-message-value="Confirm that {{ donation.amountPaise|money }} was received (ref. {{ donation.referenceCode }})." data-confirm-confirm-label-value="Mark verified" data-action="submit->confirm#ask">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                            <textarea class="form-control" name="note" rows="2" placeholder="Note (e.g. bank statement line)" aria-label="Verification note"></textarea>
+                            <button class="btn btn-primary btn-sm btn-block" type="submit">{{ icon('check', 'icon-sm') }} Mark as verified</button>
+                        </form>
+                    {% endif %}
+                    {% if donation.status.canTransitionTo(enum('App\\Enum\\DonationStatus').Rejected) %}
+                        <form method="post" action="{{ path('admin_donation_reject', {id: donation.id}) }}" class="stack-sm" data-controller="confirm" data-confirm-title-value="Reject contribution" data-confirm-message-value="Mark {{ donation.referenceCode }} as not received?" data-confirm-confirm-label-value="Reject" data-confirm-danger-value="true" data-action="submit->confirm#ask">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                            <textarea class="form-control" name="note" rows="2" placeholder="Reason (internal)" aria-label="Rejection reason"></textarea>
+                            <button class="btn btn-danger-outline btn-sm btn-block" type="submit">Reject</button>
+                        </form>
+                    {% endif %}
+                </div>
+            </section>
+        {% endif %}
+        <section class="card">
+            <div class="card-header"><h2>Internal notes</h2></div>
+            <div class="card-body">
+                <form method="post" action="{{ path('admin_donation_notes', {id: donation.id}) }}" class="stack-sm">
+                    <input type="hidden" name="_csrf_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                    <textarea class="form-control" name="adminNotes" rows="5" aria-label="Internal notes">{{ donation.adminNotes }}</textarea>
+                    <button class="btn btn-sm" type="submit">Save notes</button>
+                </form>
+            </div>
+        </section>
+    </aside>
+</div>
+{% endblock %}

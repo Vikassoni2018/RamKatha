@@ -1,0 +1,29 @@
+{% if story.series and seriesOutline is not empty %}
+    <nav class="series-nav" aria-labelledby="series-nav-title">
+        <div class="series-nav-header">
+            <h2 id="series-nav-title">{{ icon('list', 'icon-sm') }} {{ 'story.series_label'|trans }} <a href="{{ path('app_taxonomy_show', {segment: 'series', slug: story.series.slug}) }}"{{ lang_attr(story.series, 'name') }}>{{ story.series|localized('name') }}</a></h2>
+            <span class="text-xs text-muted">{{ 'story.parts_count'|trans({'%count%': seriesOutline|length}) }}</span>
+        </div>
+        <ol class="series-list">
+            {% for item in seriesOutline %}
+                <li>
+                    {% if item.slug == story.slug %}
+                        <span aria-current="page"{{ lang_attr(item, 'title') }}><span class="num">{{ loop.index }}.</span> {{ item|localized('title') }}</span>
+                    {% else %}
+                        <a href="{{ path('app_story_show', {slug: item.slug}) }}"{{ lang_attr(item, 'title') }}><span class="num">{{ loop.index }}.</span> {{ item|localized('title') }}</a>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ol>
+        {% if neighbours.previous or neighbours.next %}
+            <div class="series-prev-next">
+                {% if neighbours.previous %}
+                    <a href="{{ path('app_story_show', {slug: neighbours.previous.slug}) }}" rel="prev"><small>{{ icon('arrow-left', 'icon-sm') }} {{ 'story.previous'|trans }}</small><span{{ lang_attr(neighbours.previous, 'title') }}>{{ neighbours.previous|localized('title') }}</span></a>
+                {% else %}<span></span>{% endif %}
+                {% if neighbours.next %}
+                    <a href="{{ path('app_story_show', {slug: neighbours.next.slug}) }}" rel="next"><small>{{ 'story.next'|trans }} {{ icon('arrow-right', 'icon-sm') }}</small><span{{ lang_attr(neighbours.next, 'title') }}>{{ neighbours.next|localized('title') }}</span></a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </nav>
+{% endif %}

@@ -1,0 +1,59 @@
+{% set socials = [
+    {key: 'social_facebook_url', icon: 'facebook', label: 'Facebook'},
+    {key: 'social_youtube_url', icon: 'youtube', label: 'YouTube'},
+    {key: 'social_instagram_url', icon: 'instagram', label: 'Instagram'},
+    {key: 'social_x_url', icon: 'x-logo', label: 'X'},
+    {key: 'social_whatsapp_url', icon: 'whatsapp', label: 'WhatsApp'},
+] %}
+<footer class="site-footer">
+    <div class="container">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                {% include 'partials/_brand.html.twig' %}
+                <p>{{ setting('site_tagline') }}</p>
+                <div class="footer-social">
+                    {% for s in socials %}
+                        {% if setting(s.key) %}
+                            <a href="{{ setting(s.key) }}" rel="noopener noreferrer" target="_blank" aria-label="{{ 'footer.social_link'|trans({'%network%': s.label}) }}">{{ icon(s.icon, 'icon-sm') }}</a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+            <nav aria-label="{{ 'layout.stories'|trans }}">
+                <h2>{{ 'layout.stories'|trans }}</h2>
+                <ul>
+                    <li><a href="{{ path('app_story_index') }}">{{ 'common.all_stories'|trans }}</a></li>
+                    <li><a href="{{ path('app_taxonomy_index', {segment: 'category'}) }}">{{ 'taxonomy.category.plural'|trans }}</a></li>
+                    <li><a href="{{ path('app_taxonomy_index', {segment: 'granth'}) }}">{{ 'taxonomy.scripture.plural'|trans }}</a></li>
+                    <li><a href="{{ path('app_taxonomy_index', {segment: 'series'}) }}">{{ 'taxonomy.series.plural'|trans }}</a></li>
+                    <li><a href="{{ path('app_taxonomy_index', {segment: 'devta'}) }}">{{ 'taxonomy.deity.plural'|trans }}</a></li>
+                </ul>
+            </nav>
+            <nav aria-label="{{ 'footer.information'|trans }}">
+                <h2>{{ 'footer.information'|trans }}</h2>
+                <ul>
+                    {% for page in footer_pages() %}
+                        <li><a href="{{ path('app_page', {slug: page.slug}) }}"{{ lang_attr(page, 'title') }}>{{ page|localized('title') }}</a></li>
+                    {% endfor %}
+                    <li><a href="{{ path('app_contact') }}">{{ 'footer.contact'|trans }}</a></li>
+                </ul>
+            </nav>
+            <nav aria-label="{{ 'layout.support'|trans }}">
+                <h2>{{ 'layout.support'|trans }}</h2>
+                <ul>
+                    {% if features.donationsEnabled %}<li><a href="{{ path('app_support') }}">{{ 'layout.voluntary_support'|trans }}</a></li>{% endif %}
+                    {% if app.user %}
+                        <li><a href="{{ path('app_account') }}">{{ 'layout.my_account'|trans }}</a></li>
+                    {% else %}
+                        <li><a href="{{ path('app_login') }}">{{ 'layout.log_in'|trans }}</a></li>
+                        {% if features.registrationEnabled %}<li><a href="{{ path('app_register') }}">{{ 'footer.new_account'|trans }}</a></li>{% endif %}
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        <div class="footer-bottom">
+            <p class="footer-disclaimer mb-0">{{ setting('content_disclaimer')|truncate_words(220) }}</p>
+            <p class="mb-0">© {{ 'now'|date('Y') }} {{ setting('site_name') }}</p>
+        </div>
+    </div>
+</footer>

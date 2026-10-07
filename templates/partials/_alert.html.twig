@@ -1,0 +1,15 @@
+{# Reusable alert / flash. type: success | warning | error | info #}
+{% set type = type in ['success', 'warning', 'error', 'danger', 'info'] ? type : 'info' %}
+{% set icons = {success: 'check-circle', warning: 'alert-triangle', error: 'alert-circle', danger: 'alert-circle', info: 'info'} %}
+<div class="alert alert-{{ type }}"
+     role="{{ type in ['error', 'danger', 'warning'] ? 'alert' : 'status' }}"
+     {% if dismissible|default(false) %}data-controller="flash" data-flash-auto-dismiss-value="{{ type == 'success' ? 7000 : 0 }}"{% endif %}>
+    {{ icon(icons[type]) }}
+    <div class="alert-content">
+        {% if title|default(false) %}<p class="alert-title">{{ title }}</p>{% endif %}
+        <p class="mb-0">{{ message }}</p>
+    </div>
+    {% if dismissible|default(false) %}
+        <button type="button" class="btn btn-ghost btn-icon btn-sm alert-dismiss" data-action="flash#dismiss" aria-label="{{ 'components.alert.dismiss'|trans }}">{{ icon('close', 'icon-sm') }}</button>
+    {% endif %}
+</div>

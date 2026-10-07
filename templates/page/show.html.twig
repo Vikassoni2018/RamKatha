@@ -1,0 +1,21 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="container container-reading">
+    <header class="page-hero">
+        <twig:Breadcrumbs :items="seo.breadcrumbs" />
+        {% if app.locale == 'en' and not page.hasEnglishVersion %}
+            {# English URL of a page that has no English version yet: the Hindi original follows. #}
+            <div class="alert" role="note">
+                {{ icon('globe') }}
+                <div class="alert-content"><p class="mb-0">{{ 'i18n.page_not_translated'|trans }}</p></div>
+            </div>
+        {% endif %}
+        <h1{{ lang_attr(page, 'title') }}>{{ page|localized('title') }}</h1>
+        <p class="text-xs text-subtle mb-0">{{ 'page.last_updated'|trans({'%date%': page.updatedAt|long_date}) }}</p>
+    </header>
+    <div class="prose"{{ lang_attr(page, 'body') }}>
+        {{ page|localized('body')|sanitize_html('app.story_sanitizer') }}
+    </div>
+</div>
+{% endblock %}

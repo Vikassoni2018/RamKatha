@@ -1,0 +1,67 @@
+security:
+    password_hashers:
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+
+    providers:
+        app_user_provider:
+            entity:
+                class: App\Entity\User
+                property: email
+
+    role_hierarchy:
+        # ROLE_STAFF is an internal grouping role that grants access to /admin.
+        ROLE_AUTHOR: [ROLE_USER, ROLE_STAFF]
+        ROLE_REVIEWER: [ROLE_USER, ROLE_STAFF]
+        ROLE_EDITOR: [ROLE_AUTHOR]
+        ROLE_ADMIN: [ROLE_EDITOR, ROLE_REVIEWER]
+        ROLE_SUPER_ADMIN: [ROLE_ADMIN]
+
+    firewalls:
+        dev:
+            pattern: ^/(_profiler|_wdt|assets|build)/
+            security: false
+        main:
+            lazy: true
+            provider: app_user_provider
+            user_checker: App\Security\UserChecker
+            form_login:
+                login_path: app_login
+                check_path: app_login
+                enable_csrf: true
+                username_parameter: email
+                password_parameter: password
+                default_target_path: app_account
+                use_referer: false
+            logout:
+                path: app_logout
+                target: app_home
+                enable_csrf: true
+            remember_me:
+                secret: '%kernel.secret%'
+                lifetime: 2592000 # 30 days
+                path: /
+                samesite: lax
+                secure: auto
+                httponly: true
+                signature_properties: ['password', 'isActive']
+            login_throttling:
+                max_attempts: 5
+                interval: '15 minutes'
+
+    access_control:
+        - { path: ^/admin, roles: ROLE_STAFF }
+        # Live components are only used inside the admin panel.
+        - { path: ^/_components, roles: ROLE_STAFF }
+        # Visitor pages exist in Hindi (/account) and English (/en/account).
+        - { path: ^/(en/)?account, roles: ROLE_USER }
+        - { path: ^/(en/)?collections$, roles: ROLE_USER }
+        - { path: ^/(en/)?collections/, roles: ROLE_USER }
+
+when@test:
+    security:
+        password_hashers:
+            Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface:
+                algorithm: auto
+                cost: 4
+                time_cost: 3
+                memory_cost: 10

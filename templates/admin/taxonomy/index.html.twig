@@ -1,0 +1,43 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}{{ label }}{% endblock %}
+{% block breadcrumbs %}<li><span aria-current="page">{{ label }}</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div><h1>{{ label }}</h1><p>{{ terms.totalItems }} item(s)</p></div>
+    <div class="actions"><a class="btn btn-primary btn-sm" href="{{ path('admin_taxonomy_new', {type: type}) }}">{{ icon('plus', 'icon-sm') }} Add</a></div>
+</div>
+
+<form class="filter-bar" method="get">
+    <div class="form-group grow"><label class="form-label" for="tq">Search</label><input id="tq" class="form-control" type="search" name="q" value="{{ app.request.query.get('q') }}"></div>
+    <div class="actions"><button class="btn btn-primary btn-sm">Search</button></div>
+</form>
+
+{% if terms|length > 0 %}
+    <div class="admin-table-card">
+        <table class="admin-table">
+            <thead><tr><th>Name</th><th>Slug</th><th class="num">Published stories</th><th class="num">Position</th><th>Status</th><th class="cell-actions"><span class="visually-hidden">Actions</span></th></tr></thead>
+            <tbody>
+                {% for t in terms %}
+                    <tr>
+                        <td class="cell-main" data-label="Name"><a class="cell-title" href="{{ path('admin_taxonomy_edit', {type: type, id: t.id}) }}">{{ t.name }}</a>{% if t.nameEn %}<span class="cell-sub">{{ t.nameEn }}</span>{% endif %}</td>
+                        <td data-label="Slug"><code>{{ t.slug }}</code></td>
+                        <td class="num" data-label="Stories">{{ counts[t.id]|default(0) }}</td>
+                        <td class="num" data-label="Position">{{ t.position }}</td>
+                        <td data-label="Status">{% if t.active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-muted">Hidden</span>{% endif %}</td>
+                        <td class="cell-actions">
+                            <a class="btn btn-ghost btn-sm" href="{{ path('admin_taxonomy_edit', {type: type, id: t.id}) }}">{{ icon('edit', 'icon-sm') }} Edit</a>
+                            {% if type != 'tag' and t.active %}<a class="btn btn-ghost btn-sm" href="{{ taxonomy_path(t) }}" target="_blank" rel="noopener">{{ icon('external-link', 'icon-sm') }}<span class="visually-hidden">View</span></a>{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="table-footer"><span>{{ terms.firstItemNumber }}–{{ terms.lastItemNumber }} of {{ terms.totalItems }}</span><twig:Pagination :paginator="terms" :summary="false" label="Pagination" previous="Previous" next="Next" /></div>
+    </div>
+{% else %}
+    {{ ui.empty('layers', 'Nothing here yet', 'Create the first entry.', path('admin_taxonomy_new', {type: type}), 'Add') }}
+{% endif %}
+{% endblock %}

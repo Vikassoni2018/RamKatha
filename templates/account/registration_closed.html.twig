@@ -1,0 +1,7 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="container auth-wrap">
+    <twig:EmptyState icon="lock" :title="'auth.register.closed_title'|trans" :text="'auth.register.closed_text'|trans" :actionUrl="path('app_story_index')" :actionLabel="'account.browse_stories'|trans" :headingLevel="1" />
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}Pages{% endblock %}
+{% block breadcrumbs %}<li><span aria-current="page">Pages</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div><h1>Pages</h1><p>About, legal and trust pages. Starter texts are templates — review them with a qualified advisor for your jurisdiction.</p></div>
+    <div class="actions"><a class="btn btn-primary btn-sm" href="{{ path('admin_page_new') }}">{{ icon('plus', 'icon-sm') }} New page</a></div>
+</div>
+{% if pages is not empty %}
+    <div class="admin-table-card">
+        <table class="admin-table">
+            <thead><tr><th>Title</th><th>URL</th><th>Status</th><th>Footer</th><th>Updated</th></tr></thead>
+            <tbody>
+                {% for p in pages %}
+                    <tr>
+                        <td class="cell-main" data-label="Title"><a class="cell-title" href="{{ path('admin_page_edit', {id: p.id}) }}">{{ p.title }}</a></td>
+                        <td data-label="URL"><a href="{{ path('app_page', {slug: p.slug}) }}" target="_blank" rel="noopener">/{{ p.slug }}</a></td>
+                        <td data-label="Status">{% if p.published %}<span class="badge badge-success">Published</span>{% else %}<span class="badge badge-muted">Hidden</span>{% endif %}</td>
+                        <td data-label="Footer">{{ p.showInFooter ? 'yes (' ~ p.position ~ ')' : 'no' }}</td>
+                        <td data-label="Updated">{{ p.updatedAt|ago }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    {{ ui.empty('file-text', 'No pages yet', 'Run php bin/console app:setup to create the starter legal pages, or add one.', path('admin_page_new'), 'New page') }}
+{% endif %}
+{% endblock %}

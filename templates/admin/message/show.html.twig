@@ -1,0 +1,16 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}{{ message.subject }}{% endblock %}
+{% block breadcrumbs %}<li><a href="{{ path('admin_message_index') }}">Messages</a></li><li><span aria-current="page">{{ message.subject|truncate_words(40) }}</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div><h1>{{ message.subject }}</h1><p>{{ message.name }} &lt;{{ message.email }}&gt; · {{ message.createdAt|local_datetime }}</p></div>
+    <div class="actions">
+        <a class="btn btn-sm btn-secondary" href="mailto:{{ message.email }}?subject={{ ('Re: ' ~ message.subject)|url_encode }}">{{ icon('mail', 'icon-sm') }} Reply by email</a>
+        {{ ui.post_button(path('admin_message_archive', {id: message.id}), message.archived ? 'Move to inbox' : 'Archive', {icon: 'archive', class: 'btn btn-sm'}) }}
+    </div>
+</div>
+<div class="card"><div class="card-body"><p class="notes-text mb-0">{{ message.message }}</p></div></div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+{% form_theme form 'form/admin_theme.html.twig' %}
+
+{% block title %}Social post #{{ post.id }}{% endblock %}
+{% block breadcrumbs %}<li><a href="{{ path('admin_social_index') }}">Social posts</a></li><li><span aria-current="page">#{{ post.id }}</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div>
+        <h1>{{ post.account.platform.label }} post · {{ post.story.title }}</h1>
+        <p>{{ ui.status_badge(post.status) }} <a href="{{ path('admin_story_edit', {id: post.story.id}) }}">Open story</a> · link: <code>{{ post.link }}</code></p>
+    </div>
+    <div class="actions">
+        {% if post.externalUrl %}<a class="btn btn-sm btn-secondary" href="{{ post.externalUrl }}" target="_blank" rel="noopener noreferrer">{{ icon('external-link', 'icon-sm') }} Open on Facebook</a>{% endif %}
+        {% if post.status.value == 'failed' %}{{ ui.post_button(path('admin_social_retry', {id: post.id}), 'Retry now', {icon: 'refresh', class: 'btn btn-sm btn-secondary'}) }}{% endif %}
+        {% if post.status.value in ['draft', 'failed', 'queued'] %}{{ ui.post_button(path('admin_social_delete', {id: post.id}), 'Delete', {icon: 'trash', class: 'btn btn-sm btn-danger-outline', confirm: 'Delete this post?', danger: true, title: 'Delete post'}) }}{% endif %}
+    </div>
+</div>
+
+<div class="panel-grid">
+    <section class="card">
+        <div class="card-header"><h2>Caption</h2></div>
+        <div class="card-body">
+            {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+                {{ form_row(form.message) }}
+                {{ form_row(form.scheduledAt) }}
+                {% if post.status.editable %}
+                    <div class="form-actions">
+                        <button class="btn" type="submit">Save draft</button>
+                        <button class="btn btn-primary" type="submit" name="queue" value="1">{{ icon('send', 'icon-sm') }} {{ post.status.value == 'queued' ? 'Save & re-queue' : 'Queue for publishing' }}</button>
+                    </div>
+                {% endif %}
+            {{ form_end(form) }}
+        </div>
+    </section>
+    <aside class="stack">
+        <section class="card">
+            <div class="card-header"><h2>Result</h2></div>
+            <div class="card-body">
+                <dl class="kv">
+                    <dt>Post ID</dt><dd><code>{{ post.externalPostId ?: '—' }}</code></dd>
+                    <dt>Published</dt><dd>{{ post.publishedAt ? post.publishedAt|local_datetime : '—' }}</dd>
+                    <dt>Attempts</dt><dd>{{ post.attemptCount }}</dd>
+                    {% if post.lastError %}<dt>Last error</dt><dd class="text-danger">{{ post.lastError }}{% if post.lastErrorRetryable %} (temporary){% endif %}</dd>{% endif %}
+                </dl>
+            </div>
+        </section>
+        {% if post.attempts is not empty %}
+            <section class="card">
+                <div class="card-header"><h2>Attempts</h2></div>
+                <div class="card-body stack">
+                    {% for a in post.attempts %}
+                        <details>
+                            <summary class="text-sm">{{ a.success ? '✓' : '✗' }} {{ a.attemptedAt|local_datetime }} · HTTP {{ a.httpStatus ?? '—' }} · {{ a.durationMs }} ms</summary>
+                            {% if a.errorMessage %}<p class="text-sm text-danger">{{ a.errorMessage }}</p>{% endif %}
+                            {% if a.responseExcerpt %}<pre class="code-block">{{ a.responseExcerpt }}</pre>{% endif %}
+                        </details>
+                    {% endfor %}
+                </div>
+            </section>
+        {% endif %}
+    </aside>
+</div>
+{% endblock %}

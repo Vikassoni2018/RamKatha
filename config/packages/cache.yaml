@@ -1,0 +1,19 @@
+framework:
+    cache:
+        prefix_seed: katha/platform
+        # Filesystem cache: works on any single server, no Redis required.
+        app: cache.adapter.filesystem
+        pools:
+            # Tag-aware pool for derived content (homepage blocks, taxonomy menus, settings).
+            cache.content:
+                adapter: cache.app
+                tags: true
+                default_lifetime: 3600
+            cache.rate_limiter:
+                adapter: cache.app
+
+when@test:
+    framework:
+        cache:
+            # Rate-limiter state and cached blocks must never leak between test runs.
+            app: cache.adapter.array

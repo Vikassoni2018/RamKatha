@@ -1,0 +1,16 @@
+# Safety net for setups where the PROJECT directory sits inside a web root (e.g. XAMPP htdocs):
+# nothing outside public/ may be served (.env*, var/, config/, vendor/, src/ ...).
+# A production virtual host must use public/ as DocumentRoot (docs/deploy/), which makes this file irrelevant.
+
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(?!public/) - [F,L]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    <FilesMatch "^\.|\.(env|ya?ml|lock|json|md|php|twig|log|sql|xml|dist)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>

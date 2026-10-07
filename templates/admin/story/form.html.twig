@@ -1,0 +1,177 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+{% form_theme form 'form/admin_theme.html.twig' %}
+
+{% block title %}{{ isNew ? 'New story' : story.title }}{% endblock %}
+{% block breadcrumbs %}
+    <li><a href="{{ path('admin_story_index') }}">Stories</a></li>
+    <li><span aria-current="page">{{ isNew ? 'New' : story.title|truncate_words(40) }}</span></li>
+{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div>
+        <h1>{{ isNew ? 'New story' : story.title }}</h1>
+        {% if not isNew %}
+            <p class="cluster">{{ ui.status_badge(story.status) }} {{ ui.status_badge(story.verificationStatus) }} {% if story.audioStatus %}{{ ui.status_badge(story.audioStatus) }}{% endif %}
+                {% if story.audioOutdated %}<span class="badge badge-warning">Audio outdated</span>{% endif %}
+                <span class="text-subtle">· updated {{ story.updatedAt|ago }}{% if story.updatedBy %} by {{ story.updatedBy.displayName }}{% endif %}</span></p>
+        {% endif %}
+    </div>
+    {% if not isNew %}
+        <div class="actions">
+            {% if is_granted('STORY_PREVIEW', story) %}<a class="btn btn-sm" href="{{ path('admin_story_preview', {id: story.id}) }}" target="_blank" rel="noopener" data-turbo="false">{{ icon('eye', 'icon-sm') }} Preview</a>{% endif %}
+            {% if story.published %}<a class="btn btn-sm" href="{{ path('app_story_show', {slug: story.slug}) }}" target="_blank" rel="noopener">{{ icon('external-link', 'icon-sm') }} View live</a>{% endif %}
+            <a class="btn btn-sm btn-ghost" href="{{ path('admin_story_revisions', {id: story.id}) }}">{{ icon('clock', 'icon-sm') }} Revisions ({{ revisionCount }})</a>
+        </div>
+    {% endif %}
+</div>
+
+{% if not isNew and not canEdit %}
+    {% include 'partials/_alert.html.twig' with {type: 'info', message: 'This story is read-only for you in its current state (authors can edit only their own drafts).'} only %}
+{% endif %}
+
+<div class="editor-layout">
+    <div>
+        <nav class="form-section-nav" aria-label="Form sections">
+            {% for id, label in {content: 'Content', taxonomy: 'Taxonomy', sources: 'Sources', media: 'Media', audio: 'Audio', seo: 'SEO & social', publishing: 'Publishing'} %}
+                <a class="chip" href="#sec-{{ id }}">{{ label }}</a>
+            {% endfor %}
+        </nav>
+
+        {{ form_start(form, {attr: {novalidate: 'novalidate', id: 'story-form'}}) }}
+        {{ form_errors(form) }}
+
+        <section class="card form-section" id="sec-content" aria-labelledby="h-content">
+            <div class="card-header"><h2 id="h-content">{{ icon('book-open', 'icon-sm') }} Content</h2></div>
+            <div class="card-body" data-controller="slug" data-slug-url-value="{{ path('admin_api_slug') }}" data-slug-locked-value="{{ story.slug ? 'true' : 'false' }}">
+                {{ form_row(form.title) }}
+                <div class="form-row form-row-2">
+                    {{ form_row(form.originalTitle) }}
+                    {{ form_row(form.subtitle) }}
+                </div>
+                {{ form_row(form.slug) }}
+                <p class="form-help mt-0">URL: {{ site_url }}/katha/<strong data-slug-target="preview">{{ story.slug ?: '…' }}</strong></p>
+                <div data-controller="char-counter" data-char-counter-max-value="600">{{ form_row(form.excerpt) }}</div>
+                <div data-controller="rich-editor">{{ form_row(form.body) }}</div>
+                {{ form_row(form.language) }}
+            </div>
+        </section>
+
+        <section class="card form-section" id="sec-taxonomy" aria-labelledby="h-taxonomy">
+            <div class="card-header"><h2 id="h-taxonomy">{{ icon('layers', 'icon-sm') }} Taxonomy</h2></div>
+            <div class="card-body">
+                <div class="form-group"><span class="form-label">Categories</span><div class="check-grid">{% for child in form.categories %}<div class="form-check">{{ form_widget(child) }}{{ form_label(child) }}</div>{% endfor %}</div>{{ form_errors(form.categories) }}</div>
+                <div class="form-row form-row-2">
+                    <div class="form-group"><span class="form-label">Deities</span><div class="check-grid">{% for child in form.deities %}<div class="form-check">{{ form_widget(child) }}{{ form_label(child) }}</div>{% endfor %}</div></div>
+                    <div class="form-group"><span class="form-label">Festivals</span><div class="check-grid">{% for child in form.festivals %}<div class="form-check">{{ form_widget(child) }}{{ form_label(child) }}</div>{% endfor %}</div></div>
+                </div>
+                <div class="form-row form-row-2">
+                    {{ form_row(form.tags) }}
+                    {{ form_row(form.newTags) }}
+                </div>
+                <div class="form-row form-row-3">
+                    {{ form_row(form.scripture) }}
+                    {{ form_row(form.series) }}
+                    {{ form_row(form.seriesPosition) }}
+                </div>
+            </div>
+        </section>
+
+        <section class="card form-section" id="sec-sources" aria-labelledby="h-sources">
+            <div class="card-header"><h2 id="h-sources">{{ icon('book', 'icon-sm') }} Sources & authenticity</h2></div>
+            <div class="card-body">
+                {% include 'partials/_alert.html.twig' with {type: 'info', message: 'Never present generated or paraphrased text as scripture. Choose the classification honestly and cite precise references. The “Source Verified” badge is granted only by a reviewer through the workflow, and is removed automatically when content or sources change.'} only %}
+                {{ form_row(form.sourceType) }}
+                {{ form_row(form.sourceReferences) }}
+                {{ form_row(form.sourceNotes) }}
+            </div>
+        </section>
+
+        <section class="card form-section" id="sec-media" aria-labelledby="h-media">
+            <div class="card-header"><h2 id="h-media">{{ icon('image', 'icon-sm') }} Media</h2></div>
+            <div class="card-body form-row form-row-2">
+                {{ form_row(form.coverImage) }}
+                {{ form_row(form.ogImage) }}
+            </div>
+        </section>
+
+        <section class="card form-section" id="sec-audio" aria-labelledby="h-audio">
+            <div class="card-header"><h2 id="h-audio">{{ icon('headphones', 'icon-sm') }} Audio settings</h2></div>
+            <div class="card-body">
+                {{ form_row(form.audioEnabled) }}
+                {{ form_row(form.ttsVoice) }}
+            </div>
+        </section>
+
+        <section class="card form-section" id="sec-seo" aria-labelledby="h-seo">
+            <div class="card-header"><h2 id="h-seo">{{ icon('globe', 'icon-sm') }} SEO & social</h2></div>
+            <div class="card-body" data-controller="serp-preview" data-serp-preview-suffix-value="{{ setting('seo_title_suffix') }}">
+                <input type="hidden" data-serp-preview-target="fallbackTitle" value="{{ story.title }}">
+                <input type="hidden" data-serp-preview-target="fallbackDescription" value="{{ story.excerpt }}">
+                <div class="serp-preview mb-6" aria-label="Search result preview">
+                    <div class="serp-url">{{ site_url }}/katha/{{ story.slug ?: '…' }}</div>
+                    <div class="serp-title" data-serp-preview-target="outTitle"></div>
+                    <div class="serp-desc" data-serp-preview-target="outDescription"></div>
+                </div>
+                <div data-controller="char-counter" data-char-counter-max-value="65">{{ form_row(form.seoTitle) }}</div>
+                <div data-controller="char-counter" data-char-counter-max-value="160">{{ form_row(form.seoDescription) }}</div>
+                {{ form_row(form.canonicalUrl) }}
+                {% if form.robotsIndex is defined %}
+                    <div class="form-row form-row-2">{{ form_row(form.robotsIndex) }}{{ form_row(form.robotsFollow) }}</div>
+                {% endif %}
+                <hr>
+                {{ form_row(form.facebookTitle) }}
+                {{ form_row(form.facebookDescription) }}
+                {% if form.autoPublishFacebook is defined %}{{ form_row(form.autoPublishFacebook) }}{% endif %}
+            </div>
+        </section>
+
+        <section class="card form-section" id="sec-publishing" aria-labelledby="h-publishing">
+            <div class="card-header"><h2 id="h-publishing">{{ icon('calendar', 'icon-sm') }} Publishing & support card</h2></div>
+            <div class="card-body">
+                {% if form.featured is defined %}{{ form_row(form.featured) }}{% endif %}
+                {{ form_row(form.scheduledAt) }}
+                {{ form_row(form.showDonationCta) }}
+                {{ form_row(form.donationMessage) }}
+            </div>
+        </section>
+
+        {% if isNew or canEdit %}
+            <div class="card form-section">
+                <div class="card-body">
+                    {{ form_row(form.changeSummary) }}
+                    <div class="form-actions mt-0">
+                        <button type="submit" class="btn btn-primary">{{ icon('check', 'icon-sm') }} {{ isNew ? 'Create draft' : 'Save changes' }}</button>
+                        <a class="btn btn-ghost" href="{{ path('admin_story_index') }}">Cancel</a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        {{ form_end(form, {render_rest: true}) }}
+    </div>
+
+    {% if not isNew %}
+        <aside class="editor-aside" aria-label="Workflow">
+            {% include 'admin/story/_workflow.html.twig' %}
+            {% include 'admin/story/_audio_panel.html.twig' %}
+            {% if is_granted('STORY_SOCIAL', story) %}{% include 'admin/story/_social_panel.html.twig' %}{% endif %}
+
+            {% if auditTrail is not empty %}
+                <section class="card" aria-labelledby="trail-title">
+                    <div class="card-header"><h2 id="trail-title">{{ icon('activity', 'icon-sm') }} History</h2></div>
+                    <ul class="check-list">
+                        {% for log in auditTrail %}
+                            <li>{{ icon('activity', 'check-icon') }}<span>{{ log.action.label }}{% if log.metadata.transition is defined %} ({{ log.metadata.from }} → {{ log.metadata.to }}){% endif %}<span class="cell-sub">{{ log.actorIdentifier }} · {{ log.createdAt|ago }}</span>{% if log.metadata.notes is defined and log.metadata.notes %}<span class="cell-sub notes-text">“{{ log.metadata.notes }}”</span>{% endif %}</span></li>
+                        {% endfor %}
+                    </ul>
+                </section>
+            {% endif %}
+
+            {% if is_granted('STORY_DELETE', story) %}
+                {{ ui.post_button(path('admin_story_delete', {id: story.id}), 'Delete draft permanently', {icon: 'trash', class: 'btn btn-sm btn-danger-outline', confirm: 'Delete this never-published draft permanently? This cannot be undone.', danger: true, title: 'Delete draft'}) }}
+            {% endif %}
+        </aside>
+    {% endif %}
+</div>
+{% endblock %}

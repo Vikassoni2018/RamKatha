@@ -1,0 +1,93 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}Stories{% endblock %}
+{% block breadcrumbs %}<li><span aria-current="page">Stories</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div>
+        <h1>Stories</h1>
+        <p>{{ stories.totalItems }} result(s){% if not is_granted('ROLE_EDITOR') and not is_granted('ROLE_REVIEWER') %} · showing your stories{% endif %}</p>
+    </div>
+    <div class="actions">
+        {% if is_granted('ROLE_ADMIN') %}<a class="btn btn-sm" href="{{ path('admin_story_export') }}" data-turbo="false">{{ icon('download', 'icon-sm') }} Export CSV</a>{% endif %}
+        {% if is_granted('STORY_CREATE') %}<a class="btn btn-primary btn-sm" href="{{ path('admin_story_new') }}">{{ icon('plus', 'icon-sm') }} New story</a>{% endif %}
+    </div>
+</div>
+
+<nav class="cluster mb-4" aria-label="Status filter">
+    <a class="chip {{ filters.status is null ? 'is-active' }}" href="{{ path('admin_story_index') }}">All active</a>
+    {% for status in enum('App\\Enum\\StoryStatus').cases() %}
+        {% if counts[status.value]|default(0) > 0 %}
+            <a class="chip {{ filters.status == status ? 'is-active' }}" href="{{ path('admin_story_index', {status: status.value}) }}">{{ status.label }} <span class="chip-count">{{ counts[status.value] }}</span></a>
+        {% endif %}
+    {% endfor %}
+</nav>
+
+<form class="filter-bar" method="get" data-controller="autosubmit">
+    {% if filters.status %}<input type="hidden" name="status" value="{{ filters.status.value }}">{% endif %}
+    <div class="form-group grow">
+        <label class="form-label" for="f-q">Search</label>
+        <input id="f-q" class="form-control" type="search" name="q" value="{{ filters.q }}" placeholder="Title or slug…">
+    </div>
+    <div class="form-group">
+        <label class="form-label" for="f-audio">Audio</label>
+        <select id="f-audio" class="form-select" name="audio" data-action="change->autosubmit#submit">
+            <option value="">Any</option>
+            {% for s in enum('App\\Enum\\AudioStatus').cases() %}<option value="{{ s.value }}" {% if filters.audio == s %}selected{% endif %}>{{ s.label }}</option>{% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <label class="form-label" for="f-ver">Verification</label>
+        <select id="f-ver" class="form-select" name="verification" data-action="change->autosubmit#submit">
+            <option value="">Any</option>
+            {% for s in enum('App\\Enum\\VerificationStatus').cases() %}<option value="{{ s.value }}" {% if filters.verification == s %}selected{% endif %}>{{ s.label }}</option>{% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <label class="form-label" for="f-cat">Category</label>
+        <select id="f-cat" class="form-select" name="category" data-action="change->autosubmit#submit">
+            <option value="">Any</option>
+            {% for c in categories %}<option value="{{ c.id }}" {% if filters.category and filters.category.id == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+        </select>
+    </div>
+    <div class="actions">
+        <button class="btn btn-primary btn-sm" type="submit">Filter</button>
+        <a class="btn btn-ghost btn-sm" href="{{ path('admin_story_index') }}">Reset</a>
+    </div>
+</form>
+
+{% if stories|length > 0 %}
+    <div class="admin-table-card">
+        <table class="admin-table">
+            <thead>
+                <tr><th></th><th>Story</th><th>Status</th><th>Source</th><th>Audio</th><th>Author</th><th>Updated</th><th class="cell-actions"><span class="visually-hidden">Actions</span></th></tr>
+            </thead>
+            <tbody>
+                {% for story in stories %}
+                    <tr>
+                        <td data-label="">{% if story.coverImage %}<img class="thumb" src="{{ media_url(story.coverImage, 'thumb') }}" alt="" width="56" height="40" loading="lazy">{% else %}<span class="thumb cover-fallback" aria-hidden="true">{{ icon('diya') }}</span>{% endif %}</td>
+                        <td class="cell-main" data-label="Story">
+                            <a class="cell-title" href="{{ path('admin_story_edit', {id: story.id}) }}">{{ story.title }}</a>
+                            <span class="cell-sub">/katha/{{ story.slug }}{% if story.featured %} · ★ featured{% endif %}</span>
+                        </td>
+                        <td data-label="Status">{{ ui.status_badge(story.status) }}</td>
+                        <td data-label="Source">{{ ui.status_badge(story.verificationStatus) }}<span class="cell-sub">{{ story.sourceType.label }}</span></td>
+                        <td data-label="Audio">{{ ui.status_badge(story.audioStatus) }}{% if story.audioDurationSeconds %}<span class="cell-sub">{{ story.audioDurationSeconds|duration }}</span>{% endif %}</td>
+                        <td data-label="Author">{{ story.createdBy ? story.createdBy.displayName : '—' }}</td>
+                        <td data-label="Updated"><span title="{{ story.updatedAt|local_datetime }}">{{ story.updatedAt|ago }}</span></td>
+                        <td class="cell-actions">
+                            <a class="btn btn-ghost btn-sm" href="{{ path('admin_story_edit', {id: story.id}) }}">{{ icon('edit', 'icon-sm') }} Edit</a>
+                            {% if is_granted('STORY_PREVIEW', story) %}<a class="btn btn-ghost btn-sm" href="{{ path('admin_story_preview', {id: story.id}) }}" target="_blank" rel="noopener" data-turbo="false">{{ icon('eye', 'icon-sm') }}<span class="visually-hidden">Preview</span></a>{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="table-footer"><span>{{ stories.firstItemNumber }}–{{ stories.lastItemNumber }} of {{ stories.totalItems }}</span><twig:Pagination :paginator="stories" label="Pagination" :summary="false" previous="Previous" next="Next" /></div>
+    </div>
+{% else %}
+    {{ ui.empty('book-open', 'No stories found', 'Try other filters, or create the first story.', is_granted('STORY_CREATE') ? path('admin_story_new') : null, 'New story') }}
+{% endif %}
+{% endblock %}

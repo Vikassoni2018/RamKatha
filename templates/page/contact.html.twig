@@ -1,0 +1,33 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="container container-reading">
+    <header class="page-hero">
+        <twig:Breadcrumbs :items="seo.breadcrumbs" />
+        <h1>{{ 'contact.title'|trans }}</h1>
+        <p class="lead">{{ 'contact.lead'|trans }}</p>
+    </header>
+
+    {% if intro %}
+        <div class="prose mb-6"{{ lang_attr(intro, 'body') }}>{{ intro|localized('body')|sanitize_html('app.story_sanitizer') }}</div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-body">
+            {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+                <div class="form-row form-row-2">
+                    {{ form_row(form.name) }}
+                    {{ form_row(form.email) }}
+                </div>
+                {{ form_row(form.subject) }}
+                {{ form_row(form.message) }}
+                {{ form_row(form.website) }}
+                <p class="form-help">{{ 'contact.privacy_note'|trans }}</p>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">{{ icon('send', 'icon-sm') }} {{ 'contact.submit'|trans }}</button>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+</div>
+{% endblock %}

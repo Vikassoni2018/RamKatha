@@ -1,0 +1,39 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}Audit log{% endblock %}
+{% block breadcrumbs %}<li><span aria-current="page">Audit log</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header"><div><h1>Audit log</h1><p>Append-only record of important actions. Passwords and tokens are never logged.</p></div></div>
+
+<form class="filter-bar" method="get" data-controller="autosubmit">
+    <div class="form-group"><label class="form-label" for="aa">Action</label><select id="aa" class="form-select" name="action" data-action="change->autosubmit#submit"><option value="">Any</option>{% for a in actions %}<option value="{{ a.value }}" {% if action == a %}selected{% endif %}>{{ a.value }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label class="form-label" for="at">Entity</label><select id="at" class="form-select" name="type" data-action="change->autosubmit#submit"><option value="">Any</option>{% for t in types %}<option value="{{ t }}" {% if app.request.query.get('type') == t %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label class="form-label" for="ae">Entity ID</label><input id="ae" class="form-control" name="entity" value="{{ app.request.query.get('entity') }}"></div>
+    <div class="form-group grow"><label class="form-label" for="ac">Actor</label><input id="ac" class="form-control" type="search" name="actor" value="{{ app.request.query.get('actor') }}" placeholder="email…"></div>
+    <div class="actions"><button class="btn btn-primary btn-sm">Filter</button><a class="btn btn-ghost btn-sm" href="{{ path('admin_audit_index') }}">Reset</a></div>
+</form>
+
+{% if logs|length > 0 %}
+    <div class="admin-table-card">
+        <table class="admin-table">
+            <thead><tr><th>When</th><th>Action</th><th>Entity</th><th>Actor</th><th>Details</th></tr></thead>
+            <tbody>
+                {% for l in logs %}
+                    <tr>
+                        <td data-label="When"><span title="{{ l.createdAt|local_datetime('Y-m-d H:i:s') }}">{{ l.createdAt|local_datetime('d M H:i') }}</span></td>
+                        <td data-label="Action"><span class="badge badge-{{ l.action.badge }}">{{ l.action.value }}</span></td>
+                        <td data-label="Entity">{{ l.entityType ?: '—' }}{% if l.entityId %} #{{ l.entityId }}{% endif %}</td>
+                        <td data-label="Actor">{{ l.actorIdentifier }}{% if l.ipAddress %}<span class="cell-sub">{{ l.ipAddress }}</span>{% endif %}</td>
+                        <td data-label="Details">{% if l.metadata %}<details><summary class="text-xs">metadata</summary><pre class="code-block">{{ l.metadata|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_UNICODE') b-or constant('JSON_UNESCAPED_SLASHES')) }}</pre></details>{% endif %}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="table-footer"><span>{{ logs.totalItems }} entr{{ logs.totalItems == 1 ? 'y' : 'ies' }}</span><twig:Pagination :paginator="logs" :summary="false" label="Pagination" previous="Previous" next="Next" /></div>
+    </div>
+{% else %}
+    {{ ui.empty('activity', 'No entries', 'Actions such as publishing, verification or settings changes are recorded here.') }}
+{% endif %}
+{% endblock %}

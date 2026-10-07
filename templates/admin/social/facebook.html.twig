@@ -1,0 +1,49 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+{% form_theme form 'form/admin_theme.html.twig' %}
+
+{% block title %}Facebook{% endblock %}
+{% block breadcrumbs %}<li><span aria-current="page">Facebook</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header"><div><h1>Facebook Page</h1><p>Publish story links to your Facebook Page through the Meta Graph API.</p></div></div>
+
+<div class="panel-grid">
+    <section class="card">
+        <div class="card-header"><h2>Publishing preferences</h2></div>
+        <div class="card-body">
+            {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+                {{ form_row(form.enabled) }}
+                {{ form_row(form.displayName) }}
+                {{ form_row(form.defaultTemplate) }}
+                {{ form_row(form.defaultHashtags) }}
+                <p class="form-help">Placeholders:
+                    {% for p, d in placeholders %}<code title="{{ d }}">{{ p }}</code>{% if not loop.last %}, {% endif %}{% endfor %}.
+                    Captions use only the story’s own fields — no automatic spiritual claims.</p>
+                <div class="form-actions"><button class="btn btn-primary" type="submit">Save</button></div>
+            {{ form_end(form) }}
+        </div>
+    </section>
+
+    <aside class="stack">
+        <section class="card">
+            <div class="card-header"><h2>Credentials (environment)</h2>{% if configured %}<span class="badge badge-success">configured</span>{% else %}<span class="badge badge-warning">not configured</span>{% endif %}</div>
+            <div class="card-body stack">
+                <dl class="kv">
+                    <dt>FACEBOOK_ENABLED</dt><dd>{{ enabledEnv ? 'yes' : 'no' }}</dd>
+                    <dt>FACEBOOK_PAGE_ID</dt><dd><code>{{ pageId ?: '—' }}</code></dd>
+                    <dt>FACEBOOK_ACCESS_TOKEN</dt><dd>{{ hasToken ? 'present (hidden)' : 'missing' }}</dd>
+                    <dt>FACEBOOK_API_VERSION</dt><dd><code>{{ apiVersion }}</code></dd>
+                </dl>
+                {% if configError %}<p class="text-sm text-warning mb-0">{{ configError }}</p>{% endif %}
+                <p class="text-xs text-muted mb-0">The access token is read from the environment / Symfony secrets only. It is never stored in the database, shown here or written to logs. Required permissions: <code>pages_manage_posts</code>, <code>pages_read_engagement</code>.</p>
+                {% if configured %}{{ ui.post_button(path('admin_facebook_test'), 'Test connection', {icon: 'refresh', class: 'btn btn-sm btn-secondary'}) }}{% endif %}
+                {% if account.lastCheckedAt %}<p class="text-xs text-muted mb-0">Last check {{ account.lastCheckedAt|ago }}: {{ account.lastCheckResult }}</p>{% endif %}
+            </div>
+        </section>
+        <section class="card card-soft"><div class="card-body text-sm">
+            <p class="mb-0">To post a story: open it in the editor → <strong>Social</strong> → “Create Facebook post”, edit the caption, then queue or schedule it. Failed posts can be retried; transient errors are retried automatically (max {{ constant('App\\Entity\\SocialPost::MAX_AUTO_ATTEMPTS') }} attempts).</p>
+        </div></section>
+    </aside>
+</div>
+{% endblock %}

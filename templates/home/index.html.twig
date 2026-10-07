@@ -1,0 +1,261 @@
+{% extends 'base.html.twig' %}
+
+{# Editorial text (story/taxonomy fields) in the page language. A Hindi fallback on an English page is
+   wrapped in <span lang="hi">; Hindi pages get the plain text, so their HTML stays as it was. #}
+{% macro localized_text(subject, field) %}{% if lang_attr(subject, field) %}<span{{ lang_attr(subject, field) }}>{{ subject|localized(field) }}</span>{% else %}{{ subject|localized(field) }}{% endif %}{% endmacro %}
+
+{% block body %}
+<div class="container">
+    {# ---------- Intro + search ---------- #}
+    <section class="home-hero" aria-labelledby="home-title">
+        <div class="home-intro">
+            <span class="eyebrow">{{ icon('sparkles', 'icon-sm') }} {{ setting('site_tagline') }}</span>
+            <h1 id="home-title">{{ 'home.hero.title'|trans }}</h1>
+            <p>{{ 'home.hero.text'|trans }}</p>
+            <form class="home-search search-field" action="{{ path('app_search') }}" method="get" role="search"
+                  data-controller="search-suggest" data-search-suggest-url-value="{{ path('api_search_suggest') }}">
+                <label class="visually-hidden" for="home-q">{{ 'home.hero.search_label'|trans }}</label>
+                {{ icon('search') }}
+                <input id="home-q" class="form-control" type="search" name="q" placeholder="{{ 'layout.search_placeholder_full'|trans }}" autocomplete="off"
+                       data-search-suggest-target="input" data-action="input->search-suggest#input keydown->search-suggest#keydown">
+                <ul class="suggestions" id="home-suggestions" role="listbox" hidden data-search-suggest-target="list"></ul>
+            </form>
+            {% if categories is not empty %}
+                <div class="quick-links" aria-label="{{ 'home.hero.popular_categories'|trans }}">
+                    {% for c in categories|slice(0, 6) %}
+                        <a class="chip" href="{{ path('app_taxonomy_show', {segment: 'category', slug: c.slug}) }}"{{ lang_attr(c, 'name') }}>{{ c|localized('name') }}</a>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+
+        {# ---------- Today's featured story ---------- #}
+        {% set today = blocks.todayFeatured %}
+        {% if today %}
+            <article class="feature-card" aria-labelledby="today-title">
+                <div class="feature-card-media">
+                    <twig:Cover :media="today.coverImage" variant="large" sizes="(min-width: 900px) 55vw, 100vw" :eager="true" />
+                </div>
+                <div class="feature-card-body">
+                    <span class="eyebrow">{{ icon('sun', 'icon-sm') }} {{ 'home.today.eyebrow'|trans }}</span>
+                    <h2 id="today-title"{{ lang_attr(today, 'title') }}><a href="{{ path('app_story_show', {slug: today.slug}) }}">{{ today|localized('title') }}</a></h2>
+                    <p{{ lang_attr(today, 'excerpt') }}>{{ today|localized('excerpt')|truncate_words(220) }}</p>
+                    <div class="cluster">
+                        {% if today.isSourceVerified %}<span class="badge badge-verified">{{ icon('shield-check') }} {{ 'common.source_verified'|trans }}</span>{% endif %}
+                        <span class="badge">{{ ('source_type.' ~ today.sourceType.value ~ '.label')|trans }}</span>
+                    </div>
+                    <div class="cluster-lg">
+                        <a class="btn btn-primary btn-lg" href="{{ path('app_story_show', {slug: today.slug}) }}">{{ icon('book-open') }} {{ 'home.today.read'|trans }}</a>
+                        {% if today.hasPlayableAudio %}
+                            <a class="btn btn-secondary btn-lg" href="{{ path('app_story_show', {slug: today.slug}) }}#listen">{{ icon('headphones') }} {{ 'home.today.listen'|trans({'%duration%': today.audioDurationSeconds|duration_words}) }}</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </article>
+        {% endif %}
+    </section>
+
+    {# ---------- Continue listening / reading (personal, never cached) ---------- #}
+    {% if continue and (continue.listening is not empty or continue.reading is not empty) %}
+        <section class="continue-strip" aria-labelledby="continue-title">
+            <twig:SectionHeader :title="'home.continue.title'|trans" :subtitle="'home.continue.subtitle'|trans" id="continue-title" :link="path('app_account_history')" :linkLabel="'home.continue.history_link'|trans" />
+            <div class="grid grid-cards-sm">
+                {% for entry in continue.listening %}
+                    {% set s = entry.story %}
+                    <a class="continue-card" href="{{ path('app_story_show', {slug: s.slug}) }}#listen">
+                        <twig:Cover :media="s.coverImage" variant="thumb" />
+                        <span class="continue-card-body">
+                            <span class="continue-card-title"{{ lang_attr(s, 'title') }}>{{ s|localized('title') }}</span>
+                            <span class="text-xs text-muted">{{ icon('headphones', 'icon-sm') }} {{ entry.audioPositionSeconds|duration }} / {{ (entry.audioDurationSeconds ?? s.audioDurationSeconds)|duration }}</span>
+                            <span class="progress" aria-hidden="true"><span style="width: {{ entry.audioProgressPercent }}%"></span></span>
+                        </span>
+                    </a>
+                {% endfor %}
+                {% for entry in continue.reading %}
+                    {% set s = entry.story %}
+                    <a class="continue-card" href="{{ path('app_story_show', {slug: s.slug}) }}">
+                        <twig:Cover :media="s.coverImage" variant="thumb" />
+                        <span class="continue-card-body">
+                            <span class="continue-card-title"{{ lang_attr(s, 'title') }}>{{ s|localized('title') }}</span>
+                            <span class="text-xs text-muted">{{ icon('book-open', 'icon-sm') }} {{ 'home.continue.read_percent'|trans({'%percent%': entry.readingProgressPercent ~ '%'}) }}</span>
+                            <span class="progress" aria-hidden="true"><span style="width: {{ entry.readingProgressPercent }}%"></span></span>
+                        </span>
+                    </a>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+    {# ---------- Featured ---------- #}
+    {% if blocks.featured is not empty %}
+        <section class="section" aria-labelledby="featured-title">
+            <twig:SectionHeader :title="'home.featured.title'|trans" :subtitle="'home.featured.subtitle'|trans" id="featured-title" :link="path('app_story_index')" />
+            <div class="scroller">
+                {% for story in blocks.featured %}<twig:StoryCard :story="story" />{% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+    {# ---------- Festival (upcoming) ---------- #}
+    {% if blocks.festival and blocks.festivalStories is not empty %}
+        <section class="section" aria-labelledby="festival-title">
+            <div class="festival-banner">
+                <div>
+                    <h2 id="festival-title">{{ icon('calendar', 'icon-sm') }} {{ 'home.festival.upcoming'|trans }} {{ _self.localized_text(blocks.festival, 'name') }}</h2>
+                    <p>{% if blocks.festival.nextOccurrenceOn %}{{ blocks.festival.nextOccurrenceOn|long_date }}{% endif %}{% if blocks.festival|localized('typicalPeriod') %} · {{ _self.localized_text(blocks.festival, 'typicalPeriod') }}{% endif %}</p>
+                </div>
+                <a class="section-link" href="{{ path('app_taxonomy_show', {segment: 'festival', slug: blocks.festival.slug}) }}">{{ 'common.all_stories'|trans }} {{ icon('arrow-right', 'icon-sm') }}</a>
+            </div>
+            <div class="scroller">
+                {% for story in blocks.festivalStories|slice(0, 4) %}<twig:StoryCard :story="story" />{% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+    {# ---------- Popular (recent activity) ---------- #}
+    {% if blocks.popular is not empty %}
+        <section class="section" aria-labelledby="popular-title">
+            <twig:SectionHeader :title="'home.popular.title'|trans" :subtitle="'home.popular.subtitle'|trans" id="popular-title" :link="path('app_story_index', {sort: 'popular'})" />
+            <div class="scroller">
+                {% for story in blocks.popular|slice(0, 8) %}<twig:StoryCard :story="story" />{% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+    {# ---------- Short listens ---------- #}
+    {% if blocks.under10 is not empty or blocks.under20 is not empty %}
+        <section class="section" aria-labelledby="short-title">
+            <twig:SectionHeader :title="'home.short.title'|trans" :subtitle="'home.short.subtitle'|trans" id="short-title" :link="path('app_story_index', {audio: 1, duration: 'lt10'})" />
+            {% if blocks.under10 is not empty %}
+                <h3 class="text-sm text-muted">{{ icon('clock', 'icon-sm') }} {{ 'home.short.under_10'|trans }}</h3>
+                <div class="scroller mb-6">
+                    {% for story in blocks.under10|slice(0, 4) %}<twig:StoryCard :story="story" :headingLevel="4" :showExcerpt="false" />{% endfor %}
+                </div>
+            {% endif %}
+            {% if blocks.under20 is not empty %}
+                <h3 class="text-sm text-muted">{{ icon('clock', 'icon-sm') }} {{ 'home.short.under_20'|trans }}</h3>
+                <div class="scroller">
+                    {% for story in blocks.under20|slice(0, 4) %}<twig:StoryCard :story="story" :headingLevel="4" :showExcerpt="false" />{% endfor %}
+                </div>
+            {% endif %}
+        </section>
+    {% endif %}
+</div>
+
+{# ---------- Browse by taxonomy ---------- #}
+{% if categories is not empty or deities is not empty or scriptures is not empty %}
+    <section class="section band" aria-labelledby="browse-title">
+        <div class="container">
+            <h2 id="browse-title" class="visually-hidden">{{ 'home.browse.title'|trans }}</h2>
+            <div class="grid grid-2">
+                {% if categories is not empty %}
+                    <div>
+                        <twig:SectionHeader :title="'taxonomy.category.plural'|trans" :link="path('app_taxonomy_index', {segment: 'category'})" />
+                        <div class="grid grid-cards-sm">
+                            {% for c in categories|slice(0, 8) %}
+                                <a class="tile" href="{{ path('app_taxonomy_show', {segment: 'category', slug: c.slug}) }}">
+                                    <span class="tile-icon">{{ icon('layers') }}</span>
+                                    <span class="tile-title">{{ _self.localized_text(c, 'name') }}<span class="tile-meta">{{ 'common.stories_count'|trans({'%count%': c.total}) }}</span></span>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+                {% if deities is not empty %}
+                    <div>
+                        <twig:SectionHeader :title="'taxonomy.deity.plural'|trans" :link="path('app_taxonomy_index', {segment: 'devta'})" />
+                        <div class="grid grid-cards-sm">
+                            {% for d in deities|slice(0, 8) %}
+                                <a class="tile" href="{{ path('app_taxonomy_show', {segment: 'devta', slug: d.slug}) }}">
+                                    <span class="tile-icon">{{ icon('sun') }}</span>
+                                    <span class="tile-title">{{ _self.localized_text(d, 'name') }}<span class="tile-meta">{{ 'common.stories_count'|trans({'%count%': d.total}) }}</span></span>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            {% if scriptures is not empty %}
+                <div class="mt-8">
+                    <twig:SectionHeader :title="'home.browse.by_scripture'|trans" :link="path('app_taxonomy_index', {segment: 'granth'})" />
+                    <div class="cluster">
+                        {% for s in scriptures %}
+                            <a class="chip" href="{{ path('app_taxonomy_show', {segment: 'granth', slug: s.slug}) }}">{{ icon('book', 'icon-sm') }} {{ _self.localized_text(s, 'name') }} <span class="chip-count">{{ s.total }}</span></a>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </section>
+{% endif %}
+
+<div class="container">
+    {# ---------- Recently published ---------- #}
+    {% if blocks.recent is not empty %}
+        <section class="section" aria-labelledby="recent-title">
+            <twig:SectionHeader :title="'home.recent.title'|trans" :subtitle="'home.recent.subtitle'|trans" id="recent-title" :link="path('app_story_index')" />
+            <div class="grid grid-cards">
+                {% for story in blocks.recent %}<twig:StoryCard :story="story" />{% endfor %}
+            </div>
+        </section>
+    {% elseif not today %}
+        <section class="section">
+            <twig:EmptyState icon="book-open" :title="'home.empty.title'|trans" :text="'home.empty.text'|trans" />
+        </section>
+    {% endif %}
+
+    {# ---------- Series ---------- #}
+    {% if seriesList is not empty %}
+        <section class="section" aria-labelledby="series-title">
+            <twig:SectionHeader :title="'taxonomy.series.plural'|trans" :subtitle="'home.series.subtitle'|trans" id="series-title" :link="path('app_taxonomy_index', {segment: 'series'})" />
+            <div class="grid grid-cards-sm">
+                {% for s in seriesList %}
+                    <a class="tile" href="{{ path('app_taxonomy_show', {segment: 'series', slug: s.slug}) }}">
+                        <span class="tile-icon">{{ icon('list') }}</span>
+                        <span class="tile-title">{{ _self.localized_text(s, 'name') }}<span class="tile-meta">{{ 'home.series.parts'|trans({'%count%': s.total}) }}</span></span>
+                    </a>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+    {# ---------- Latest audio ---------- #}
+    {% if blocks.latestAudio is not empty %}
+        <section class="section" aria-labelledby="audio-title">
+            <twig:SectionHeader :title="'home.audio.title'|trans" :subtitle="'home.audio.subtitle'|trans" id="audio-title" :link="path('app_story_index', {audio: 1})" />
+            <div class="scroller">
+                {% for story in blocks.latestAudio|slice(0, 4) %}<twig:StoryCard :story="story" />{% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+    {# ---------- Account CTA (guests) ---------- #}
+    {% if not app.user and features.registrationEnabled %}
+        <section class="section" aria-labelledby="account-cta-title">
+            <div class="cta-panel band-maroon">
+                <div>
+                    <h2 id="account-cta-title">{{ 'home.account_cta.title'|trans }}</h2>
+                    <p>{{ 'home.account_cta.text'|trans }}</p>
+                </div>
+                <div class="cluster">
+                    <a class="btn btn-accent btn-lg" href="{{ path('app_register') }}">{{ 'home.account_cta.register'|trans }}</a>
+                    <a class="btn btn-ghost btn-on-dark btn-lg" href="{{ path('app_login') }}">{{ 'layout.log_in'|trans }}</a>
+                </div>
+            </div>
+        </section>
+    {% endif %}
+
+    {# ---------- Voluntary support (calm, below the content) ---------- #}
+    {% if features.donationsEnabled %}
+        <section class="section" aria-labelledby="support-title">
+            <div class="support-band">
+                <div>
+                    <h2 id="support-title">{{ icon('heart', 'icon-sm') }} {{ 'home.support.title'|trans }}</h2>
+                    <p>{{ setting('donation_message') }}</p>
+                </div>
+                <a class="btn btn-secondary" href="{{ path('app_support') }}">{{ 'home.support.learn_more'|trans }}</a>
+            </div>
+        </section>
+    {% endif %}
+</div>
+{% endblock %}

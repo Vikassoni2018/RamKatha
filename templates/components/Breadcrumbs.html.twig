@@ -1,0 +1,19 @@
+{# items: list of {name, url[, lang]}; the last item is the current page. On other-language pages a
+   name that is still Hindi (an untranslated title) gets lang="hi"; an explicit item.lang wins. #}
+{% props items = [], label = null %}
+{% if items|length > 1 %}
+    <nav class="breadcrumbs" aria-label="{{ label ?: 'components.breadcrumbs.label'|trans }}">
+        <ol>
+            {% for item in items %}
+                {%~ set item_lang = item.lang ?? (app.locale != 'hi' and item.name matches '/\\p{Devanagari}/u' ? 'hi' : null) %}
+                <li>
+                    {% if loop.last %}
+                        <span aria-current="page"{% if item_lang %} lang="{{ item_lang }}"{% endif %}>{{ item.name }}</span>
+                    {% else %}
+                        <a href="{{ item.url }}"{% if item_lang %} lang="{{ item_lang }}"{% endif %}>{{ item.name }}</a>
+                    {% endif %}
+                </li>
+            {% endfor %}
+        </ol>
+    </nav>
+{% endif %}

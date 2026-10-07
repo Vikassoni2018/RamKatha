@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="container container-reading">
+    <div class="error-page">
+        <span class="empty-state-icon">{{ icon('heart') }}</span>
+        <h1>{{ 'support.thanks.title'|trans }}</h1>
+        <p>{{ setting('donation_thanks_message') }}</p>
+        <p class="text-sm">{{ 'support.reference_code_label'|trans }} <span class="upi-ref">{{ donation.referenceCode }}</span> · {{ 'support.thanks.status_label'|trans }} <strong>{{ donation.status.translationKey|trans }}</strong></p>
+        <p class="text-xs text-subtle">{{ 'support.thanks.not_proof'|trans }}</p>
+        <div class="cluster">
+            {% if donation.story %}
+                <a class="btn btn-primary" href="{{ path('app_story_show', {slug: donation.story.slug}) }}">{{ 'support.thanks.back_to_story'|trans }}</a>
+            {% endif %}
+            <a class="btn btn-secondary" href="{{ path('app_home') }}">{{ 'support.thanks.home'|trans }}</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

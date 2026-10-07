@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="container container-reading">
+    <header class="page-hero">
+        <h1>{{ 'support.declare.title'|trans }}</h1>
+        <p class="lead">{{ 'support.declare.reference_code'|trans }} <span class="upi-ref">{{ donation.referenceCode }}</span> · {{ donation.amountPaise|money }}{% if donation.story %} · {% if lang_attr(donation.story, 'title') %}<span{{ lang_attr(donation.story, 'title') }}>“{{ donation.story|localized('title') }}”</span>{% else %}“{{ donation.story|localized('title') }}”{% endif %}{% endif %}</p>
+    </header>
+
+    {% include 'partials/_alert.html.twig' with {type: 'info', title: 'support.declare.all_optional'|trans, message: 'support.declare.utr_info'|trans} only %}
+
+    <div class="card">
+        <div class="card-body">
+            {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+                {{ form_row(form.transactionReference) }}
+                <div class="form-row form-row-2">
+                    {{ form_row(form.amount) }}
+                    {{ form_row(form.paymentDate) }}
+                </div>
+                {{ form_row(form.payerName) }}
+                <div class="form-row form-row-2">
+                    {{ form_row(form.email) }}
+                    {{ form_row(form.phone) }}
+                </div>
+                {{ form_row(form.message) }}
+                {{ form_row(form.anonymous) }}
+                <p class="form-help">{{ 'support.declare.privacy'|trans }}</p>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">{{ 'support.declare.submit'|trans }}</button>
+                    <a class="btn btn-ghost" href="{{ path('app_support_thanks', {uuid: donation.uuid.toRfc4122}) }}">{{ 'support.declare.skip'|trans }}</a>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+</div>
+{% endblock %}

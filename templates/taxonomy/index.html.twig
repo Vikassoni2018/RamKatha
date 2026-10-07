@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% set icons = {category: 'layers', deity: 'sun', scripture: 'book', series: 'list', festival: 'calendar', tag: 'tag'} %}
+
+{% block body %}
+<div class="container">
+    <header class="page-hero">
+        <twig:Breadcrumbs :items="seo.breadcrumbs" />
+        <h1>{{ taxonomy_plural(key) }}</h1>
+        {# Lower-cased for the English sentence ("Find stories by deities."); Devanagari has no case. #}
+        <p class="lead">{{ 'browse.index.lead'|trans({'%taxonomy%': taxonomy_plural(key)|lower}) }}</p>
+    </header>
+
+    {% if terms is not empty %}
+        <div class="grid grid-cards-sm">
+            {% for term in terms %}
+                {% set count = counts[term.slug]|default(0) %}
+                <a class="tile" href="{{ path('app_taxonomy_show', {segment: segment, slug: term.slug}) }}">
+                    <span class="tile-icon">
+                        {% if term.coverImage %}<img src="{{ media_url(term.coverImage, 'thumb') }}" alt="" width="40" height="40" loading="lazy">{% else %}{{ icon(icons[key]) }}{% endif %}
+                    </span>
+                    <span class="tile-title"><span{{ lang_attr(term, 'name') }}>{{ term|localized('name') }}</span>
+                        <span class="tile-meta">
+                            {{ key == 'series' ? 'story.parts_count'|trans({'%count%': count}) : 'common.stories_count'|trans({'%count%': count}) }}
+                            {% if key == 'festival' and term.nextOccurrenceOn %} · {{ term.nextOccurrenceOn|long_date }}{% endif %}
+                            {% if key == 'scripture' and term|localized('attributedTo') %} · <span{{ lang_attr(term, 'attributedTo') }}>{{ term|localized('attributedTo') }}</span>{% endif %}
+                        </span>
+                    </span>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <twig:EmptyState :icon="icons[key]" :title="'browse.index.empty_title'|trans" :text="'browse.index.empty_text'|trans" :actionUrl="path('app_story_index')" :actionLabel="'story.view_all'|trans" />
+    {% endif %}
+</div>
+{% endblock %}

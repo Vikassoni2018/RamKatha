@@ -1,0 +1,49 @@
+# Apache rules for the public/ document root (requires mod_rewrite).
+# For production prefer the same rules in the virtual host with "AllowOverride None"
+# (see docs/deploy/apache-vhost.conf); this file makes shared hosting / XAMPP work out of the box.
+
+DirectoryIndex index.php
+Options -Indexes
+
+<IfModule mod_negotiation.c>
+    Options -MultiViews
+</IfModule>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # Detect the base path automatically (works in a sub-directory too).
+    RewriteCond %{REQUEST_URI}::$0 ^(/.+)/(.*)::\2$
+    RewriteRule .* - [E=BASE:%1]
+
+    # Pass the Authorization header through to PHP.
+    RewriteCond %{HTTP:Authorization} .+
+    RewriteRule ^ - [E=HTTP_AUTHORIZATION:%0]
+
+    # Never expose dot-files (.htaccess, .git, ...) except .well-known (ACME challenges).
+    RewriteRule (^|/)\.(?!well-known/) - [F,L]
+
+    # Avoid duplicate content: /index.php/foo -> /foo
+    RewriteCond %{ENV:REDIRECT_STATUS} =""
+    RewriteRule ^index\.php(?:/(.*)|$) %{ENV:BASE}/$1 [R=301,L]
+
+    # Existing files (assets, media) are served directly.
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+
+    # Everything else goes to the Symfony front controller.
+    RewriteRule ^ %{ENV:BASE}/index.php [L]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    <IfModule mod_alias.c>
+        RedirectMatch 307 ^/$ /index.php/
+    </IfModule>
+</IfModule>
+
+<IfModule mod_headers.c>
+    # AssetMapper file names contain a content hash: cache them for a year.
+    <If "%{REQUEST_URI} =~ m#^/assets/#">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </If>
+</IfModule>

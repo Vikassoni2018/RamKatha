@@ -1,0 +1,31 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}Messages{% endblock %}
+{% block breadcrumbs %}<li><span aria-current="page">Messages</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div><h1>Contact messages</h1></div>
+    <div class="actions"><a class="chip {{ not archived ? 'is-active' }}" href="{{ path('admin_message_index') }}">Inbox</a><a class="chip {{ archived ? 'is-active' }}" href="{{ path('admin_message_index', {archived: 1}) }}">Archived</a></div>
+</div>
+{% if messages|length > 0 %}
+    <div class="admin-table-card">
+        <table class="admin-table">
+            <thead><tr><th>Subject</th><th>From</th><th>Received</th></tr></thead>
+            <tbody>
+                {% for m in messages %}
+                    <tr>
+                        <td class="cell-main" data-label="Subject"><a class="cell-title" href="{{ path('admin_message_show', {id: m.id}) }}">{% if not m.readAt %}<span class="badge badge-accent">new</span> {% endif %}{{ m.subject }}</a><span class="cell-sub">{{ m.message|truncate_words(120) }}</span></td>
+                        <td data-label="From">{{ m.name }}<span class="cell-sub">{{ m.email }}</span></td>
+                        <td data-label="Received">{{ m.createdAt|ago }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="table-footer"><span>{{ messages.totalItems }} message(s)</span><twig:Pagination :paginator="messages" :summary="false" label="Pagination" previous="Previous" next="Next" /></div>
+    </div>
+{% else %}
+    {{ ui.empty('mail', archived ? 'No archived messages' : 'Inbox is empty', 'Messages sent through the contact form appear here.') }}
+{% endif %}
+{% endblock %}

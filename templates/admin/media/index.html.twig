@@ -1,0 +1,43 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+{% form_theme form 'form/admin_theme.html.twig' %}
+
+{% block title %}Media{% endblock %}
+{% block breadcrumbs %}<li><span aria-current="page">Media</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header"><div><h1>Media library</h1><p>Images are validated, re-encoded and stored locally under UUID file names, with resized variants (thumb / card / large).</p></div></div>
+
+<div class="panel-grid">
+    <div>
+        <form class="filter-bar" method="get">
+            <div class="form-group grow"><label class="form-label" for="mq">Search</label><input id="mq" class="form-control" type="search" name="q" value="{{ app.request.query.get('q') }}" placeholder="File name or alt text…"></div>
+            <div class="actions"><button class="btn btn-primary btn-sm">Search</button></div>
+        </form>
+        {% if items|length > 0 %}
+            <div class="media-grid">
+                {% for m in items %}
+                    <a class="media-tile" href="{{ path('admin_media_show', {id: m.id}) }}">
+                        <img src="{{ media_url(m, 'thumb') }}" alt="{{ m.altText }}" loading="lazy" width="{{ m.variantDimensions('thumb').width }}" height="{{ m.variantDimensions('thumb').height }}">
+                        <span class="media-tile-body">{{ m.originalName }}<br>{{ m.width }}×{{ m.height }} · {{ m.fileSize|file_size }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+            <twig:Pagination :paginator="items" label="Pagination" previous="Previous" next="Next" />
+        {% else %}
+            {{ ui.empty('image', 'No images yet', 'Upload a cover image to get started.') }}
+        {% endif %}
+    </div>
+    <aside class="card">
+        <div class="card-header"><h2>{{ icon('upload', 'icon-sm') }} Upload</h2></div>
+        <div class="card-body">
+            {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+                {{ form_row(form.file) }}
+                {{ form_row(form.altText) }}
+                <p class="form-help">JPEG, PNG or WebP up to 8 MB. SVG and other types are rejected; the actual file content is checked.</p>
+                <div class="form-actions"><button class="btn btn-primary" type="submit">Upload</button></div>
+            {{ form_end(form) }}
+        </div>
+    </aside>
+</div>
+{% endblock %}

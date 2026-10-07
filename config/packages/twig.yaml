@@ -1,0 +1,12 @@
+twig:
+    file_name_pattern: '*.twig'
+    form_themes: ['form/app_theme.html.twig']
+    date:
+        timezone: '%app.timezone%'
+    globals:
+        site_url: '%app.site_url%'
+        app_timezone: '%app.timezone%'
+
+when@test:
+    twig:
+        strict_variables: true

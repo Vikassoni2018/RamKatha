@@ -1,0 +1,20 @@
+<div {{ attributes }} class="card">
+    <div class="card-header"><h2>{{ icon('mic', 'icon-sm') }} Try the dictionary</h2></div>
+    <div class="card-body stack">
+        <div class="form-group mb-0">
+            <label class="form-label" for="pron-preview-text">Text</label>
+            <textarea id="pron-preview-text" class="form-control" rows="3" data-model="debounce(400)|text">{{ text }}</textarea>
+        </div>
+        <div class="form-group mb-0">
+            <label class="form-label" for="pron-preview-lang">Language</label>
+            <select id="pron-preview-lang" class="form-select" data-model="language">
+                {% for code, label in {hi: 'Hindi', sa: 'Sanskrit', en: 'English'} %}<option value="{{ code }}" {% if language == code %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+        </div>
+        <div>
+            <p class="form-label">Sent to the TTS engine</p>
+            <pre class="code-block" aria-live="polite">{{ this.processed }}</pre>
+        </div>
+        <p class="text-xs text-muted mb-0">{{ this.chunks|length }} chunk(s) at 300 characters (production uses TTS_CHUNK_MAX_CHARS).</p>
+    </div>
+</div>

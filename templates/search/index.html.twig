@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="container">
+    <header class="page-hero search-hero">
+        <h1>{{ 'search.title'|trans }}</h1>
+        <form action="{{ path('app_search') }}" method="get" role="search">
+            <div class="search-field">
+                <label class="visually-hidden" for="search-q">{{ 'search.query_label'|trans }}</label>
+                {{ icon('search') }}
+                <input id="search-q" class="form-control" type="search" name="q" value="{{ filter.query }}" placeholder="{{ 'search.placeholder'|trans }}" maxlength="120" autofocus data-user-content>
+            </div>
+            <button type="submit" class="btn btn-primary">{{ 'search.submit'|trans }}</button>
+        </form>
+    </header>
+
+    {% if filter.query is null and not filter.hasActiveFilters %}
+        <twig:EmptyState icon="search" :title="'search.start.title'|trans" :text="'search.start.text'|trans" :actionUrl="path('app_story_index')" :actionLabel="'story.view_all'|trans" />
+    {% else %}
+        <div class="listing-layout with-filters">
+            <aside aria-label="{{ 'filters.label'|trans }}">
+                {% include 'story/_filters.html.twig' with {action: path('app_search'), facets: facets, filter: filter} %}
+            </aside>
+            <div>
+                <div class="toolbar">
+                    {# The search words are the visitor's own text (data-user-content). #}
+                    <p class="result-count mb-0" role="status"{% if filter.query %} data-user-content{% endif %}>
+                        {% if filter.query %}{{ 'search.results_for'|trans({'%count%': results.totalItems, '%query%': filter.query}) }}{% else %}{{ 'search.results'|trans({'%count%': results.totalItems}) }}{% endif %}
+                    </p>
+                </div>
+                {% if results|length > 0 %}
+                    <div class="grid grid-cards">
+                        {% for story in results %}<twig:StoryCard :story="story" :headingLevel="2" :highlightTerms="terms" />{% endfor %}
+                    </div>
+                    <twig:Pagination :paginator="results" />
+                {% else %}
+                    <twig:EmptyState icon="search" :title="'search.no_results.title'|trans" :text="'search.no_results.text'|trans" :actionUrl="path('app_story_index')" :actionLabel="'search.browse_all'|trans" />
+                {% endif %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

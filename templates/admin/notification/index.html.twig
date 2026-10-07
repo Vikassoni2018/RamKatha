@@ -1,0 +1,31 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}Notifications{% endblock %}
+{% block breadcrumbs %}<li><span aria-current="page">Notifications</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div><h1>Notifications</h1><p>System events for staff: publications, audio and Facebook failures, declared contributions, contact messages.</p></div>
+    <div class="actions">{{ ui.post_button(path('admin_notifications_read_all'), 'Mark all as read', {icon: 'check', class: 'btn btn-sm'}) }}</div>
+</div>
+{% if notifications|length > 0 %}
+    <div class="admin-table-card">
+        <table class="admin-table">
+            <thead><tr><th>Event</th><th>Level</th><th>When</th></tr></thead>
+            <tbody>
+                {% for n in notifications %}
+                    <tr>
+                        <td class="cell-main" data-label="Event"><a class="cell-title" href="{{ path('admin_notification_open', {id: n.id}) }}">{% if not n.read %}<span class="badge badge-accent">new</span> {% endif %}{{ n.title }}</a>{% if n.message %}<span class="cell-sub">{{ n.message|truncate_words(200) }}</span>{% endif %}</td>
+                        <td data-label="Level"><span class="badge badge-{{ n.level.badge }}">{{ n.level.value }}</span></td>
+                        <td data-label="When">{{ n.createdAt|ago }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="table-footer"><span>{{ notifications.totalItems }} total</span><twig:Pagination :paginator="notifications" :summary="false" label="Pagination" previous="Previous" next="Next" /></div>
+    </div>
+{% else %}
+    {{ ui.empty('bell', 'No notifications', 'You are all caught up.') }}
+{% endif %}
+{% endblock %}

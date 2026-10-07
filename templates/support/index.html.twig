@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="container container-reading">
+    <header class="page-hero">
+        <twig:Breadcrumbs :items="seo.breadcrumbs" />
+        <h1>{{ 'support.title'|trans }}</h1>
+        <p class="lead">{{ 'support.lead'|trans }}</p>
+    </header>
+
+    <div class="prose">
+        <h2>{{ 'support.uses.title'|trans }}</h2>
+        <ul>
+            <li>{{ 'support.uses.free_stories'|trans }}</li>
+            <li>{{ 'support.uses.audio'|trans }}</li>
+            <li>{{ 'support.uses.research'|trans }}</li>
+            <li>{{ 'support.uses.website'|trans }}</li>
+        </ul>
+        <blockquote>{{ 'support.voluntary_notice'|trans }}</blockquote>
+    </div>
+
+    {% if features.donationsEnabled %}
+        {% include 'support/_support_card.html.twig' with {story: null, presets: presets} %}
+        <div class="card card-soft mt-6">
+            <div class="card-body text-sm">
+                <h2 class="text-sm mb-4">{{ 'support.how.title'|trans }}</h2>
+                <ol class="mb-0">
+                    <li>{{ 'support.how.step_choose'|trans({'%button%': 'support.card.pay_button'|trans}) }}</li>
+                    <li>{{ 'support.how.step_app'|trans }} <strong>{{ payeeName }}</strong>{{ 'support.how.step_app_end'|trans }}</li>
+                    <li>{{ 'support.how.step_pin'|trans }}</li>
+                    <li>{{ 'support.how.step_verify'|trans }}</li>
+                </ol>
+            </div>
+        </div>
+    {% else %}
+        {% include 'partials/_alert.html.twig' with {type: 'info', message: 'support.unavailable'|trans} only %}
+    {% endif %}
+</div>
+{% endblock %}

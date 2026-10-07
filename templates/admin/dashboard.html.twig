@@ -1,0 +1,117 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_chart.html.twig' as chart %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div>
+        <h1>Namaste, {{ app.user.displayName }}</h1>
+        <p>Overview of content, audio, community and voluntary support.</p>
+    </div>
+    <div class="actions">
+        {% if is_granted('STORY_CREATE') %}<a class="btn btn-primary" href="{{ path('admin_story_new') }}">{{ icon('plus', 'icon-sm') }} New story</a>{% endif %}
+    </div>
+</div>
+
+{% if audioUnavailable and is_granted('ROLE_EDITOR') %}
+    {% include 'partials/_alert.html.twig' with {type: 'warning', title: 'Audio generation is not available', message: audioUnavailable} only %}
+{% endif %}
+{% if stats.failures is not empty %}
+    <div class="alert alert-error" role="alert">
+        {{ icon('alert-circle') }}
+        <div class="alert-content">
+            <p class="alert-title">Recent failures</p>
+            <ul class="mb-0">
+                {% for n in stats.failures %}
+                    <li><a href="{{ path('admin_notification_open', {id: n.id}) }}">{{ n.title }}</a> <span class="text-subtle">· {{ n.createdAt|ago }}</span></li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+{% endif %}
+
+<div class="stat-grid">
+    <a class="stat-card" href="{{ path('admin_story_index') }}"><span class="stat-label">{{ icon('book-open', 'icon-sm') }} Stories</span><span class="stat-value">{{ stats.stories.total }}</span><span class="stat-sub">{{ stats.stories.published }} published · {{ stats.stories.drafts }} drafts</span></a>
+    <a class="stat-card {{ stats.stories.inReview > 0 ? 'is-warning' }}" href="{{ path('admin_story_index', {status: 'under_review'}) }}"><span class="stat-label">{{ icon('shield-check', 'icon-sm') }} In review</span><span class="stat-value">{{ stats.stories.inReview }}</span><span class="stat-sub">under review / verified</span></a>
+    <a class="stat-card" href="{{ path('admin_story_index', {status: 'scheduled'}) }}"><span class="stat-label">{{ icon('calendar', 'icon-sm') }} Scheduled</span><span class="stat-value">{{ stats.stories.scheduled }}</span><span class="stat-sub">auto-published by cron</span></a>
+    <a class="stat-card {{ stats.audio.failed > 0 ? 'is-danger' }}" href="{{ path('admin_audio_queue') }}"><span class="stat-label">{{ icon('headphones', 'icon-sm') }} Audio</span><span class="stat-value">{{ stats.audio.ready }}</span><span class="stat-sub">{{ stats.audio.pending }} pending · {{ stats.audio.failed }} failed</span></a>
+    {% if is_granted('ROLE_ADMIN') %}
+        <a class="stat-card" href="{{ path('admin_user_index') }}"><span class="stat-label">{{ icon('users', 'icon-sm') }} Users</span><span class="stat-value">{{ stats.users.total|number_format }}</span><span class="stat-sub">+{{ stats.users.new7 }} in the last 7 days</span></a>
+        <a class="stat-card {{ stats.donations.pendingCount > 0 ? 'is-warning' }}" href="{{ path('admin_donation_index', {status: 'declared'}) }}"><span class="stat-label">{{ icon('rupee', 'icon-sm') }} Contributions</span><span class="stat-value">{{ stats.donations.verifiedAmount|money }}</span><span class="stat-sub">{{ stats.donations.verifiedCount }} verified · {{ stats.donations.pendingCount }} awaiting check</span></a>
+        <a class="stat-card {{ stats.social.failed > 0 ? 'is-danger' }}" href="{{ path('admin_social_index') }}"><span class="stat-label">{{ icon('facebook', 'icon-sm') }} Facebook posts</span><span class="stat-value">{{ stats.social.published }}</span><span class="stat-sub">{{ stats.social.queued }} queued · {{ stats.social.failed }} failed</span></a>
+        {% if failedJobs is not null %}
+            <a class="stat-card {{ failedJobs > 0 ? 'is-danger' : 'is-success' }}" href="{{ is_granted('ROLE_SUPER_ADMIN') ? path('admin_system_failed') : '#' }}"><span class="stat-label">{{ icon('server', 'icon-sm') }} Failed jobs</span><span class="stat-value">{{ failedJobs }}</span><span class="stat-sub">messenger failure queue</span></a>
+        {% endif %}
+    {% endif %}
+</div>
+
+<div class="panel-grid">
+    <div class="stack">
+        <section class="card" aria-labelledby="eng-title">
+            <div class="card-header"><h2 id="eng-title">{{ icon('bar-chart', 'icon-sm') }} Last 30 days</h2>{% if is_granted('ROLE_ADMIN') %}<a class="section-link" href="{{ path('admin_analytics') }}">Analytics</a>{% endif %}</div>
+            <div class="card-body">
+                <div class="stat-grid mb-4">
+                    <div class="stat-card"><span class="stat-label">Views</span><span class="stat-value">{{ stats.engagement30.views|default(0)|number_format }}</span><span class="stat-sub">≈ {{ stats.engagement30.unique_views|default(0)|number_format }} unique</span></div>
+                    <div class="stat-card"><span class="stat-label">Audio plays</span><span class="stat-value">{{ stats.engagement30.audio_starts|default(0)|number_format }}</span></div>
+                    <div class="stat-card"><span class="stat-label">Completed listens</span><span class="stat-value">{{ stats.engagement30.audio_completions|default(0)|number_format }}</span></div>
+                    <div class="stat-card"><span class="stat-label">Shares</span><span class="stat-value">{{ stats.engagement30.shares|default(0)|number_format }}</span></div>
+                </div>
+                {{ chart.daily(stats.series, 'Daily views and listens, last 30 days') }}
+                <p class="text-xs text-subtle mt-4 mb-0">Lifetime: {{ stats.engagementLifetime.bookmarks }} bookmarks · {{ stats.engagementLifetime.collections }} collections · {{ stats.engagementLifetime.completedListens }} completed listens (logged-in users).</p>
+            </div>
+        </section>
+
+        {% if reviewQueue is not empty %}
+            <section class="card" aria-labelledby="review-title">
+                <div class="card-header"><h2 id="review-title">{{ icon('shield-check', 'icon-sm') }} Waiting for review</h2></div>
+                <ul class="check-list">
+                    {% for s in reviewQueue %}
+                        <li>{{ icon('file-text', 'check-icon') }}<span><a href="{{ path('admin_story_edit', {id: s.id}) }}">{{ s.title }}</a> <span class="text-subtle">· {{ s.updatedAt|ago }}</span></span></li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+    </div>
+
+    <div class="stack">
+        <section class="card" aria-labelledby="sched-title">
+            <div class="card-header"><h2 id="sched-title">{{ icon('calendar', 'icon-sm') }} Upcoming publications</h2></div>
+            {% if stats.scheduled is not empty %}
+                <ul class="check-list">
+                    {% for s in stats.scheduled %}
+                        <li>{{ icon('clock', 'check-icon') }}<span><a href="{{ path('admin_story_edit', {id: s.id}) }}">{{ s.title }}</a><span class="cell-sub">{{ s.scheduledAt|local_datetime }}</span></span></li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="card-body"><p class="text-muted mb-0">No scheduled stories.</p></div>
+            {% endif %}
+        </section>
+
+        <section class="card" aria-labelledby="drafts-title">
+            <div class="card-header"><h2 id="drafts-title">{{ icon('edit', 'icon-sm') }} My drafts</h2></div>
+            {% if myDrafts is not empty %}
+                <ul class="check-list">
+                    {% for s in myDrafts %}
+                        <li>{{ icon('file-text', 'check-icon') }}<span><a href="{{ path('admin_story_edit', {id: s.id}) }}">{{ s.title }}</a><span class="cell-sub">{{ s.updatedAt|ago }}</span></span></li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="card-body"><p class="text-muted mb-0">No drafts. {% if is_granted('STORY_CREATE') %}<a href="{{ path('admin_story_new') }}">Start a new story</a>.{% endif %}</p></div>
+            {% endif %}
+        </section>
+
+        {% if recentAudit is not empty %}
+            <section class="card" aria-labelledby="audit-title">
+                <div class="card-header"><h2 id="audit-title">{{ icon('activity', 'icon-sm') }} Recent activity</h2><a class="section-link" href="{{ path('admin_audit_index') }}">All</a></div>
+                <ul class="check-list">
+                    {% for log in recentAudit %}
+                        <li>{{ icon('activity', 'check-icon') }}<span><span class="badge badge-{{ log.action.badge }}">{{ log.action.value }}</span> {{ log.entityType }}{% if log.entityId %} #{{ log.entityId }}{% endif %}<span class="cell-sub">{{ log.actorIdentifier }} · {{ log.createdAt|ago }}</span></span></li>
+                    {% endfor %}
+                </ul>
+            </section>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

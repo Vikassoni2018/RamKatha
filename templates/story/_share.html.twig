@@ -1,0 +1,29 @@
+{# Share without third-party widgets. URLs are percent-encoded with url_encode (RFC 3986). #}
+{% set shareText = story|localized('title') ~ ' — ' ~ setting('site_name') %}
+<div data-controller="share dialog"
+     data-share-url-value="{{ shareUrl }}"
+     data-share-title-value="{{ story|localized('title') }}"
+     data-share-story-value="{{ story.uuid.toRfc4122 }}">
+    <button type="button" class="btn btn-sm" data-share-target="native" hidden data-action="share#native">{{ icon('share') }} <span class="btn-label">{{ 'share.share'|trans }}</span></button>
+    <button type="button" class="btn btn-sm" data-action="dialog#open" aria-haspopup="dialog">{{ icon('link') }} <span class="btn-label">{{ 'share.share_link'|trans }}</span></button>
+    <dialog class="modal" aria-labelledby="share-title" data-dialog-target="dialog" data-action="click->dialog#backdrop">
+        <div class="modal-header">
+            <h2 id="share-title">{{ 'share.title'|trans }}</h2>
+            <button type="button" class="btn btn-ghost btn-icon" aria-label="{{ 'common.close'|trans }}" data-action="dialog#close">{{ icon('close') }}</button>
+        </div>
+        <div class="modal-body stack">
+            <div class="cluster">
+                <a class="btn" href="https://wa.me/?text={{ (shareText ~ ' ' ~ shareUrl)|url_encode }}" target="_blank" rel="noopener noreferrer" data-action="share#tracked">{{ icon('whatsapp') }} WhatsApp</a>
+                <a class="btn" href="https://www.facebook.com/sharer/sharer.php?u={{ shareUrl|url_encode }}" target="_blank" rel="noopener noreferrer" data-action="share#tracked">{{ icon('facebook') }} Facebook</a>
+                <a class="btn" href="https://twitter.com/intent/tweet?text={{ shareText|url_encode }}&amp;url={{ shareUrl|url_encode }}" target="_blank" rel="noopener noreferrer" data-action="share#tracked">{{ icon('x-logo') }} X</a>
+            </div>
+            <div>
+                <label class="form-label" for="share-link-{{ story.id }}">{{ 'share.story_link'|trans }}</label>
+                <div class="cluster">
+                    <input id="share-link-{{ story.id }}" class="form-control grow" value="{{ shareUrl }}" readonly>
+                    <button type="button" class="btn btn-secondary" data-action="share#copy">{{ icon('copy', 'icon-sm') }} {{ 'share.copy'|trans }}</button>
+                </div>
+            </div>
+        </div>
+    </dialog>
+</div>

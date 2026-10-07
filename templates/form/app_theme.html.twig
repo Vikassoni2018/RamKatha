@@ -1,0 +1,123 @@
+{# Form theme mapping Symfony forms onto the design system (accessible labels, help, errors). #}
+{% use 'form_div_layout.html.twig' %}
+
+{%- block form_row -%}
+    {%- set widget_attr = {} -%}
+    {%- if help is not empty -%}
+        {%- set widget_attr = {attr: {'aria-describedby': id ~ '_help'}} -%}
+    {%- endif -%}
+    {%- set row_class = 'form-group' ~ (errors|length > 0 ? ' has-error' : '') -%}
+    <div{% with {attr: row_attr|merge({class: (row_attr.class|default('') ~ ' ' ~ row_class)|trim})} %}{{ block('attributes') }}{% endwith %}>
+        {{- form_label(form) -}}
+        {{- form_widget(form, widget_attr) -}}
+        {{- form_help(form) -}}
+        {{- form_errors(form) -}}
+    </div>
+{%- endblock form_row -%}
+
+{%- block form_label -%}
+    {%- if label is not same as(false) -%}
+        {%- set label_attr = label_attr|merge({class: (label_attr.class|default('') ~ ' form-label')|trim}) -%}
+        {%- if compound is defined and compound and expanded is defined and expanded -%}
+            <span class="form-label" id="{{ id }}_label">{{ label is empty ? name|humanize : (translation_domain is same as(false) ? label : label|trans(label_translation_parameters, translation_domain)) }}{% if required %}<span class="required-mark" aria-hidden="true">*</span>{% endif %}</span>
+        {%- else -%}
+            {{- parent() -}}
+        {%- endif -%}
+    {%- endif -%}
+{%- endblock form_label -%}
+
+{%- block form_label_content -%}
+    {{- parent() -}}{% if required and not (compound is defined and compound) %}<span class="required-mark" aria-hidden="true">*</span>{% endif %}
+{%- endblock form_label_content -%}
+
+{%- block form_widget_simple -%}
+    {%- set attr = attr|merge({class: (attr.class|default('') ~ ' form-control')|trim}) -%}
+    {%- if errors|length > 0 -%}{%- set attr = attr|merge({'aria-invalid': 'true'}) -%}{%- endif -%}
+    {{- parent() -}}
+{%- endblock form_widget_simple -%}
+
+{%- block textarea_widget -%}
+    {%- set attr = attr|merge({class: (attr.class|default('') ~ ' form-control')|trim}) -%}
+    {%- if errors|length > 0 -%}{%- set attr = attr|merge({'aria-invalid': 'true'}) -%}{%- endif -%}
+    {{- parent() -}}
+{%- endblock textarea_widget -%}
+
+{%- block choice_widget_collapsed -%}
+    {%- set attr = attr|merge({class: (attr.class|default('') ~ ' form-select')|trim}) -%}
+    {{- parent() -}}
+{%- endblock choice_widget_collapsed -%}
+
+{%- block choice_widget_expanded -%}
+    <div {{ block('widget_container_attributes') }} role="{{ multiple ? 'group' : 'radiogroup' }}" aria-labelledby="{{ id }}_label">
+        {%- for child in form %}
+            <div class="form-check">
+                {{- form_widget(child) -}}
+                {{- form_label(child, null, {translation_domain: choice_translation_domain}) -}}
+            </div>
+        {% endfor -%}
+    </div>
+{%- endblock choice_widget_expanded -%}
+
+{%- block checkbox_row -%}
+    <div class="form-group{{ errors|length > 0 ? ' has-error' }}">
+        <div class="form-check">
+            {{- form_widget(form) -}}
+            {{- form_label(form) -}}
+        </div>
+        {{- form_help(form) -}}
+        {{- form_errors(form) -}}
+    </div>
+{%- endblock checkbox_row -%}
+
+{%- block checkbox_label -%}
+    <label for="{{ id }}">{{ label is empty ? name|humanize : (translation_domain is same as(false) ? label : label|trans(label_translation_parameters, translation_domain)) }}</label>
+{%- endblock checkbox_label -%}
+
+{%- block radio_label -%}
+    <label for="{{ id }}">{{ label is empty ? name|humanize : (translation_domain is same as(false) ? label : label|trans(label_translation_parameters, translation_domain)) }}</label>
+{%- endblock radio_label -%}
+
+{%- block form_help -%}
+    {%- if help is not empty -%}
+        <p id="{{ id }}_help" class="form-help">{{ translation_domain is same as(false) ? help : help|trans(help_translation_parameters, translation_domain) }}</p>
+    {%- endif -%}
+{%- endblock form_help -%}
+
+{%- block form_errors -%}
+    {%- if errors|length > 0 -%}
+        <div class="form-errors" role="alert">
+            {%- if errors|length == 1 -%}
+                {{ errors|first.message }}
+            {%- else -%}
+                <ul>{% for error in errors %}<li>{{ error.message }}</li>{% endfor %}</ul>
+            {%- endif -%}
+        </div>
+    {%- endif -%}
+{%- endblock form_errors -%}
+
+{%- block repeated_row -%}
+    {{- form_row(form.first) -}}
+    {{- form_row(form.second) -}}
+    {{- form_errors(form) -}}
+{%- endblock repeated_row -%}
+
+{%- block date_widget -%}
+    {%- if widget == 'single_text' -%}
+        {{- block('form_widget_simple') -}}
+    {%- else -%}
+        {{- parent() -}}
+    {%- endif -%}
+{%- endblock date_widget -%}
+
+{%- block datetime_widget -%}
+    {%- if widget == 'single_text' -%}
+        {{- block('form_widget_simple') -}}
+    {%- else -%}
+        {{- parent() -}}
+    {%- endif -%}
+{%- endblock datetime_widget -%}
+
+{%- block file_widget -%}
+    {%- set attr = attr|merge({class: (attr.class|default('') ~ ' form-control')|trim}) -%}
+    {{- block('form_widget_simple') -}}
+{%- endblock file_widget -%}

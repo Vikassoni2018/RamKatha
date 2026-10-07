@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <meta name="csrf-token" content="{{ csrf_token('api') }}">
+    <title>{% block title %}Admin{% endblock %} · {{ setting('site_name') }}</title>
+    <link rel="icon" href="{{ asset('favicon.svg') }}" type="image/svg+xml">
+    {% for sheet in ['tokens', 'base', 'components', 'story', 'admin'] %}
+        <link rel="stylesheet" href="{{ asset('styles/' ~ sheet ~ '.css') }}" data-turbo-track="reload">
+    {% endfor %}
+    <link rel="stylesheet" href="{{ asset('@symfony/ux-live-component/live.min.css') }}" data-turbo-track="reload">
+    <meta name="csp-nonce" content="{{ csp_nonce() }}">
+    {{ importmap('admin', {nonce: csp_nonce()}) }}
+    <meta name="turbo-cache-control" content="no-cache">
+</head>
+<body class="admin">
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="admin-shell" data-controller="admin-sidebar">
+    {% include 'admin/_sidebar.html.twig' %}
+    <div class="drawer-backdrop" hidden data-admin-sidebar-target="backdrop" data-action="click->admin-sidebar#close"></div>
+
+    <div class="admin-main">
+        <header class="admin-topbar">
+            <button type="button" class="btn btn-ghost btn-icon admin-menu-toggle" aria-label="Open navigation" aria-expanded="false" aria-controls="admin-sidebar"
+                    data-admin-sidebar-target="toggle" data-action="admin-sidebar#open">{{ icon('menu') }}</button>
+            <nav class="breadcrumbs" aria-label="Breadcrumb">
+                <ol>
+                    <li><a href="{{ path('admin_dashboard') }}">Admin</a></li>
+                    {% block breadcrumbs %}{% endblock %}
+                </ol>
+            </nav>
+            <a class="btn btn-ghost btn-sm" href="{{ path('app_home') }}" target="_blank" rel="noopener">{{ icon('external-link', 'icon-sm') }} <span class="hide-sm">View site</span></a>
+            {% if is_granted('ROLE_ADMIN') %}
+                {% set unread = unread_notifications() %}
+                <a class="btn btn-ghost btn-icon notif-bell" href="{{ path('admin_notifications') }}" aria-label="Notifications ({{ unread }} unread)">
+                    {{ icon('bell') }}{% if unread > 0 %}<span class="count" aria-hidden="true">{{ unread > 99 ? '99+' : unread }}</span>{% endif %}
+                </a>
+            {% endif %}
+            <details class="dropdown">
+                <summary class="btn btn-ghost btn-sm">{{ icon('user', 'icon-sm') }} <span class="hide-sm">{{ app.user.displayName }}</span></summary>
+                <div class="dropdown-menu">
+                    <div class="dropdown-header">{{ app.user.email }}<br>{% for role in app.user.assignedRoles %}{{ role_label(role) }}{% if not loop.last %}, {% endif %}{% endfor %}</div>
+                    <a href="{{ path('app_account') }}">{{ icon('user', 'icon-sm') }} My account</a>
+                    <hr>
+                    <form method="post" action="{{ path('app_logout') }}" data-turbo="false">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}" data-controller="csrf-protection">
+                        <button type="submit">{{ icon('log-out', 'icon-sm') }} Log out</button>
+                    </form>
+                </div>
+            </details>
+        </header>
+
+        <main id="main" class="admin-content" tabindex="-1">
+            {% set flash_container_class = '' %}
+            {% include 'partials/_flash.html.twig' %}
+            {% block body %}{% endblock %}
+        </main>
+    </div>
+</div>
+<div id="toast-region" class="toast-region" aria-live="polite"></div>
+</body>
+</html>

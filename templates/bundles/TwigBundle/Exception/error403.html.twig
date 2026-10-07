@@ -1,0 +1,17 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'error.forbidden.title'|trans }} | {{ setting('site_name') }}{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="error-page">
+        <span class="error-code" aria-hidden="true">403</span>
+        <h1>{{ 'error.forbidden.heading'|trans }}</h1>
+        <p>{{ 'error.forbidden.text'|trans }}</p>
+        <div class="cluster">
+            <a class="btn btn-primary" href="{{ path('app_home') }}">{{ 'error.home'|trans }}</a>
+            {% if not app.user %}<a class="btn btn-secondary" href="{{ path('app_login') }}">{{ 'error.login'|trans }}</a>{% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="container auth-wrap">
+    <div class="card auth-card">
+        <div class="card-body">
+            <h1>{{ 'auth.register.title'|trans }}</h1>
+            <p class="lead">{{ 'auth.register.lead'|trans }}</p>
+            {{ form_start(form, {attr: {novalidate: 'novalidate', 'data-turbo': 'false'}}) }}
+                {{ form_row(form.displayName) }}
+                {{ form_row(form.email) }}
+                {{ form_row(form.plainPassword) }}
+                {{ form_row(form.website) }}
+                <div class="form-group">
+                    <div class="form-check">
+                        {{ form_widget(form.agreeTerms) }}
+                        {# One sentence around two links: the parts are separate keys so no markup goes into translations. #}
+                        <label for="{{ form.agreeTerms.vars.id }}">{{ 'auth.register.agree_start'|trans }} <a href="{{ path('app_page', {slug: 'terms'}) }}" target="_blank">{{ 'auth.register.agree_terms_link'|trans }}</a> {{ 'auth.register.agree_middle'|trans }} <a href="{{ path('app_page', {slug: 'privacy-policy'}) }}" target="_blank">{{ 'auth.register.agree_privacy_link'|trans }}</a> {{ 'auth.register.agree_end'|trans }}</label>
+                    </div>
+                    {{ form_errors(form.agreeTerms) }}
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary btn-block btn-lg">{{ 'auth.register.submit'|trans }}</button>
+                </div>
+            {{ form_end(form) }}
+            <p class="auth-footer">{{ 'auth.register.have_account'|trans }} <a href="{{ path('app_login') }}">{{ 'auth.register.login_link'|trans }}</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+{% props title, subtitle = null, link = null, linkLabel = null, id = null %}
+<div class="section-header">
+    <div>
+        <h2 {% if id %}id="{{ id }}"{% endif %}>{{ title }}</h2>
+        {% if subtitle %}<p>{{ subtitle }}</p>{% endif %}
+    </div>
+    {% if link %}<a class="section-link" href="{{ link }}">{{ linkLabel ?: 'components.section_header.view_all'|trans }} {{ icon('arrow-right', 'icon-sm') }}</a>{% endif %}
+</div>

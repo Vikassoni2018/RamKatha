@@ -1,0 +1,51 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+{% form_theme form 'form/admin_theme.html.twig' %}
+
+{% block title %}{{ user.displayName }}{% endblock %}
+{% block breadcrumbs %}<li><a href="{{ path('admin_user_index') }}">Users</a></li><li><span aria-current="page">{{ user.displayName }}</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div>
+        <h1>{{ user.displayName }}</h1>
+        <p>{{ user.email }} · joined {{ user.createdAt|local_datetime('d M Y') }}{% if user.lastLoginAt %} · last login {{ user.lastLoginAt|ago }}{% endif %}</p>
+    </div>
+    <div class="actions">
+        {% if canManage %}
+            {% if user.active %}
+                {{ ui.post_button(path('admin_user_toggle', {id: user.id}), 'Deactivate account', {icon: 'lock', class: 'btn btn-sm btn-danger-outline', confirm: 'Deactivate ' ~ user.email ~ '? The user will be logged out and cannot log in.', danger: true, title: 'Deactivate account'}) }}
+            {% else %}
+                {{ ui.post_button(path('admin_user_toggle', {id: user.id}), 'Reactivate account', {icon: 'check', class: 'btn btn-sm btn-secondary'}) }}
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+{% if not canManage %}
+    {% include 'partials/_alert.html.twig' with {type: 'info', message: 'You cannot manage this account (your own account, or an administrator account that only super admins may change).'} only %}
+{% endif %}
+
+<div class="panel-grid">
+    <div class="card"><div class="card-body">
+        {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+            {{ form_rest(form) }}
+            {% if canManage %}<div class="form-actions"><button class="btn btn-primary" type="submit">{{ icon('check', 'icon-sm') }} Save</button></div>{% endif %}
+        {{ form_end(form) }}
+    </div></div>
+    <aside class="card">
+        <div class="card-header"><h2>Activity</h2></div>
+        <div class="card-body">
+            <dl class="kv">
+                <dt>Status</dt><dd>{{ user.active ? 'Active' : 'Deactivated ' ~ (user.deactivatedAt ? user.deactivatedAt|local_datetime : '') }}</dd>
+                <dt>Bookmarks</dt><dd>{{ bookmarkCount }}</dd>
+                <dt>Collections</dt><dd>{{ collectionCount }}</dd>
+                <dt>Contributions</dt><dd>{{ donations|length }}</dd>
+            </dl>
+            {% for d in donations %}
+                <p class="text-sm mb-0 mt-4"><a href="{{ path('admin_donation_show', {id: d.id}) }}">{{ d.referenceCode }}</a> · {{ d.amountPaise|money }} · {{ ui.status_badge(d.status) }}</p>
+            {% endfor %}
+        </div>
+    </aside>
+</div>
+{% endblock %}

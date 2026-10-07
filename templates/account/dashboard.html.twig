@@ -1,0 +1,64 @@
+{% extends 'account/_layout.html.twig' %}
+
+{% block account_body %}
+<h1 class="mb-6">{{ 'account.dashboard.greeting'|trans }} <span data-user-content>{{ app.user.displayName }}</span></h1>
+
+<div class="stat-tiles mb-6">
+    <a class="stat-tile" href="{{ path('app_account_bookmarks') }}"><strong>{{ bookmarkCount }}</strong><span>{{ 'account.dashboard.stat_saved'|trans }}</span></a>
+    <a class="stat-tile" href="{{ path('app_collection_index') }}"><strong>{{ collectionCount }}</strong><span>{{ 'account.dashboard.stat_collections'|trans }}</span></a>
+    <a class="stat-tile" href="{{ path('app_account_history') }}"><strong>{{ listening|length + reading|length }}</strong><span>{{ 'account.dashboard.stat_unfinished'|trans }}</span></a>
+</div>
+
+<section class="section-tight" aria-labelledby="cl-title">
+    <twig:SectionHeader :title="'account.dashboard.continue_listening'|trans" id="cl-title" />
+    {% if listening is not empty %}
+        <div class="grid grid-cards-sm">
+            {% for entry in listening %}
+                {% set s = entry.story %}
+                <a class="continue-card" href="{{ path('app_story_show', {slug: s.slug}) }}#listen">
+                    <twig:Cover :media="s.coverImage" variant="thumb" />
+                    <span class="continue-card-body">
+                        <span class="continue-card-title"{{ lang_attr(s, 'title') }}>{{ s|localized('title') }}</span>
+                        <span class="text-xs text-muted">{{ entry.audioPositionSeconds|duration }} / {{ (entry.audioDurationSeconds ?? s.audioDurationSeconds)|duration }}</span>
+                        <span class="progress" aria-hidden="true"><span style="width: {{ entry.audioProgressPercent }}%"></span></span>
+                    </span>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <twig:EmptyState icon="headphones" :title="'account.dashboard.listening_empty_title'|trans" :text="'account.dashboard.listening_empty_text'|trans" :actionUrl="path('app_story_index', {audio: 1})" :actionLabel="'account.dashboard.browse_audio'|trans" :headingLevel="3" />
+    {% endif %}
+</section>
+
+{% if reading is not empty %}
+    <section class="section-tight" aria-labelledby="cr-title">
+        <twig:SectionHeader :title="'account.dashboard.continue_reading'|trans" id="cr-title" />
+        <div class="grid grid-cards-sm">
+            {% for entry in reading %}
+                {% set s = entry.story %}
+                <a class="continue-card" href="{{ path('app_story_show', {slug: s.slug}) }}">
+                    <twig:Cover :media="s.coverImage" variant="thumb" />
+                    <span class="continue-card-body">
+                        <span class="continue-card-title"{{ lang_attr(s, 'title') }}>{{ s|localized('title') }}</span>
+                        <span class="text-xs text-muted">{{ 'account.progress.percent_read'|trans({'%percent%': entry.readingProgressPercent ~ '%'}) }}</span>
+                        <span class="progress" aria-hidden="true"><span style="width: {{ entry.readingProgressPercent }}%"></span></span>
+                    </span>
+                </a>
+            {% endfor %}
+        </div>
+    </section>
+{% endif %}
+
+<section class="section-tight" aria-labelledby="bm-title">
+    <twig:SectionHeader :title="'account.dashboard.recent_bookmarks'|trans" id="bm-title" :link="bookmarks.totalItems > 0 ? path('app_account_bookmarks') : null" />
+    {% if bookmarks|length > 0 %}
+        <div class="grid grid-cards">
+            {% for bookmark in bookmarks %}<twig:StoryCard :story="bookmark.story" :showExcerpt="false" />{% endfor %}
+        </div>
+    {% else %}
+        <twig:EmptyState icon="bookmark" :title="'account.dashboard.bookmarks_empty_title'|trans" :text="'account.dashboard.bookmarks_empty_text'|trans" :actionUrl="path('app_story_index')" :actionLabel="'account.browse_stories'|trans" :headingLevel="3" />
+    {% endif %}
+</section>
+
+<p class="mt-8 text-sm"><a href="{{ path('app_account_delete') }}" class="text-muted">{{ 'account.delete.title'|trans }}</a></p>
+{% endblock %}

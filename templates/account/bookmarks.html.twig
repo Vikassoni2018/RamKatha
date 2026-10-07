@@ -1,0 +1,13 @@
+{% extends 'account/_layout.html.twig' %}
+
+{% block account_body %}
+<h1 class="mb-6">{{ 'account.bookmarks.title'|trans }}</h1>
+{% if bookmarks|length > 0 %}
+    <div class="grid grid-cards">
+        {% for bookmark in bookmarks %}<twig:StoryCard :story="bookmark.story" :headingLevel="2" />{% endfor %}
+    </div>
+    <twig:Pagination :paginator="bookmarks" />
+{% else %}
+    <twig:EmptyState icon="bookmark" :title="'account.bookmarks.empty_title'|trans" :text="'account.bookmarks.empty_text'|trans" :actionUrl="path('app_story_index')" :actionLabel="'account.browse_stories'|trans" />
+{% endif %}
+{% endblock %}

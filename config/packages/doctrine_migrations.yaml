@@ -1,0 +1,6 @@
+doctrine_migrations:
+    migrations_paths:
+        'DoctrineMigrations': '%kernel.project_dir%/migrations'
+    enable_profiler: false
+    # MySQL auto-commits DDL statements, so wrapping migrations in a transaction is meaningless.
+    transactional: false

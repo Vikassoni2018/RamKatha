@@ -1,0 +1,91 @@
+{% set route = app.current_route %}
+{% set taxonomy = app.request.attributes.get('type') %}
+{% macro item(label, icon, url, active, count) %}
+    <li><a href="{{ url }}" {% if active %}aria-current="page"{% endif %}>{{ icon(icon) }}<span>{{ label }}</span>{% if count|default(0) > 0 %}<span class="count">{{ count }}</span>{% endif %}</a></li>
+{% endmacro %}
+{% import _self as nav %}
+
+<aside class="admin-sidebar" id="admin-sidebar" aria-label="Admin navigation" data-admin-sidebar-target="sidebar">
+    <div class="flex-between">
+        <a class="brand" href="{{ path('admin_dashboard') }}">
+            <span class="brand-mark">{{ icon('diya') }}</span>
+            <span>{{ setting('site_name') }}<small>Admin</small></span>
+        </a>
+        <button type="button" class="btn btn-ghost btn-icon btn-on-dark admin-sidebar-close" aria-label="Close navigation" data-action="admin-sidebar#close">{{ icon('close') }}</button>
+    </div>
+
+    <div class="admin-nav-group">
+        <ul class="admin-nav">
+            {{ nav.item('Dashboard', 'grid', path('admin_dashboard'), route == 'admin_dashboard') }}
+        </ul>
+    </div>
+
+    <div class="admin-nav-group">
+        <p class="admin-nav-title">Content</p>
+        <ul class="admin-nav">
+            {{ nav.item('Stories', 'book-open', path('admin_story_index'), route starts with 'admin_story') }}
+            {% if is_granted('ROLE_EDITOR') %}
+                {{ nav.item('Categories', 'layers', path('admin_taxonomy_index', {type: 'category'}), taxonomy == 'category') }}
+                {{ nav.item('Tags', 'tag', path('admin_taxonomy_index', {type: 'tag'}), taxonomy == 'tag') }}
+                {{ nav.item('Deities', 'sun', path('admin_taxonomy_index', {type: 'deity'}), taxonomy == 'deity') }}
+                {{ nav.item('Scriptures', 'book', path('admin_taxonomy_index', {type: 'scripture'}), taxonomy == 'scripture') }}
+                {{ nav.item('Series', 'list', path('admin_taxonomy_index', {type: 'series'}), taxonomy == 'series') }}
+                {{ nav.item('Festivals', 'calendar', path('admin_taxonomy_index', {type: 'festival'}), taxonomy == 'festival') }}
+                {{ nav.item('Pages', 'file-text', path('admin_page_index'), route starts with 'admin_page') }}
+            {% endif %}
+            {{ nav.item('Media', 'image', path('admin_media_index'), route starts with 'admin_media') }}
+        </ul>
+    </div>
+
+    {% if is_granted('ROLE_EDITOR') %}
+        <div class="admin-nav-group">
+            <p class="admin-nav-title">Audio</p>
+            <ul class="admin-nav">
+                {{ nav.item('Audio', 'headphones', path('admin_audio_index'), route == 'admin_audio_index') }}
+                {{ nav.item('TTS Queue', 'refresh', path('admin_audio_queue'), route == 'admin_audio_queue') }}
+                {{ nav.item('Pronunciation', 'mic', path('admin_pronunciation_index'), route starts with 'admin_pronunciation') }}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% if is_granted('ROLE_ADMIN') %}
+        <div class="admin-nav-group">
+            <p class="admin-nav-title">Community & support</p>
+            <ul class="admin-nav">
+                {{ nav.item('Users', 'users', path('admin_user_index'), route starts with 'admin_user') }}
+                {{ nav.item('Collections', 'folder', path('admin_collection_index'), route starts with 'admin_collection') }}
+                {{ nav.item('Donations', 'rupee', path('admin_donation_index'), route starts with 'admin_donation') }}
+                {{ nav.item('Messages', 'mail', path('admin_message_index'), route starts with 'admin_message') }}
+            </ul>
+        </div>
+
+        <div class="admin-nav-group">
+            <p class="admin-nav-title">Social</p>
+            <ul class="admin-nav">
+                {{ nav.item('Facebook', 'facebook', path('admin_facebook'), route == 'admin_facebook') }}
+                {{ nav.item('Social posts', 'send', path('admin_social_index'), route starts with 'admin_social') }}
+            </ul>
+        </div>
+
+        <div class="admin-nav-group">
+            <p class="admin-nav-title">Insights</p>
+            <ul class="admin-nav">
+                {{ nav.item('Analytics', 'bar-chart', path('admin_analytics'), route starts with 'admin_analytics') }}
+                {{ nav.item('SEO', 'globe', path('admin_seo'), route == 'admin_seo') }}
+                {{ nav.item('Audit logs', 'activity', path('admin_audit_index'), route starts with 'admin_audit') }}
+                {{ nav.item('Notifications', 'bell', path('admin_notifications'), route == 'admin_notifications') }}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% if is_granted('ROLE_SUPER_ADMIN') %}
+        <div class="admin-nav-group">
+            <p class="admin-nav-title">System</p>
+            <ul class="admin-nav">
+                {{ nav.item('Settings', 'settings', path('admin_settings'), route starts with 'admin_settings') }}
+                {{ nav.item('System status', 'server', path('admin_system'), route == 'admin_system') }}
+                {{ nav.item('Failed jobs', 'alert-triangle', path('admin_system_failed'), route == 'admin_system_failed') }}
+            </ul>
+        </div>
+    {% endif %}
+</aside>

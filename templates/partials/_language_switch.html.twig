@@ -1,0 +1,11 @@
+{# Hindi/English switch: links to the current page in each language (full reload, so the player,
+   <html lang> and the JS strings all change together). variant: header | drawer #}
+<nav class="lang-switch lang-switch-{{ variant|default('header') }}" aria-label="{{ 'lang.switcher'|trans }}">
+    {% for locale in available_locales() %}
+        <a href="{{ locale_url(locale) }}" lang="{{ locale }}" hreflang="{{ locale }}" data-turbo="false"
+           {% if locale == app.locale %}aria-current="true"{% endif %}>
+            <span class="lang-switch-full">{{ ('lang.name.' ~ locale)|trans }}</span>
+            <span class="lang-switch-short" aria-hidden="true">{{ ('lang.short.' ~ locale)|trans }}</span>
+        </a>
+    {% endfor %}
+</nav>

@@ -1,0 +1,36 @@
+{% import 'admin/_macros.html.twig' as ui %}
+<section class="card" aria-labelledby="social-title">
+    <div class="card-header"><h2 id="social-title">{{ icon('send', 'icon-sm') }} Social</h2></div>
+    <div class="card-body stack">
+        {% if socialPosts is not empty %}
+            <ul class="check-list">
+                {% for p in socialPosts %}
+                    <li>{{ icon('facebook', 'check-icon') }}<span><a href="{{ path('admin_social_edit', {id: p.id}) }}">Post #{{ p.id }}</a> {{ ui.status_badge(p.status) }}<span class="cell-sub">{{ p.createdAt|ago }}</span></span></li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% if story.published %}
+            {% if facebookReady %}
+                {{ ui.post_button(path('admin_story_social', {id: story.id}), 'Create Facebook post', {icon: 'facebook', class: 'btn btn-secondary btn-sm btn-block'}) }}
+            {% else %}
+                <p class="text-xs text-muted mb-0">Facebook publishing is not configured or switched off — see <a href="{{ path('admin_facebook') }}">Facebook settings</a>.</p>
+            {% endif %}
+        {% else %}
+            <p class="text-xs text-muted mb-0">Social posts can be created once the story is published.</p>
+        {% endif %}
+
+        <hr class="mt-0 mb-0">
+        <p class="text-sm mb-0"><strong>Audiogram</strong> (optional square video)</p>
+        {% for a in socialAssets %}
+            <p class="text-xs mb-0">{{ ui.status_badge(a.status) }} {{ a.createdAt|ago }}
+                {% if a.status.value == 'ready' and a.storageKey %} · <a href="{{ media_key_url(a.storageKey) }}" target="_blank" rel="noopener" data-turbo="false">Download MP4</a>{% endif %}
+                {% if a.errorMessage %}<span class="cell-sub text-danger">{{ a.errorMessage|truncate_words(200) }}</span>{% endif %}
+            </p>
+        {% endfor %}
+        {% if audiogramUnavailable %}
+            <p class="text-xs text-muted mb-0">Unavailable: {{ audiogramUnavailable }}</p>
+        {% else %}
+            {{ ui.post_button(path('admin_story_audiogram', {id: story.id}), 'Generate audiogram', {icon: 'image', class: 'btn btn-ghost btn-sm btn-block'}) }}
+        {% endif %}
+    </div>
+</section>

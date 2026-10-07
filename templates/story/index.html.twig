@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="container">
+    <header class="page-hero">
+        <twig:Breadcrumbs :items="seo.breadcrumbs" />
+        <h1>{{ 'common.all_stories'|trans }}</h1>
+        <p class="lead">{{ 'story.index.lead'|trans }}</p>
+    </header>
+
+    <div class="listing-layout with-filters">
+        <aside aria-label="{{ 'filters.label'|trans }}">
+            {% include 'story/_filters.html.twig' with {action: path('app_story_index'), facets: facets, filter: filter} %}
+        </aside>
+        <div>
+            <div class="toolbar">
+                <p class="result-count mb-0" role="status">{{ 'common.stories_count'|trans({'%count%': stories.totalItems}) }}</p>
+            </div>
+            {% if stories|length > 0 %}
+                <div class="grid grid-cards">
+                    {% for story in stories %}<twig:StoryCard :story="story" :headingLevel="2" />{% endfor %}
+                </div>
+                <twig:Pagination :paginator="stories" />
+            {% else %}
+                <twig:EmptyState icon="search" :title="'story.index.empty_title'|trans" :text="'story.index.empty_text'|trans" :actionUrl="path('app_story_index')" :actionLabel="'story.view_all'|trans" />
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

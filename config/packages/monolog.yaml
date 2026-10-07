@@ -1,0 +1,99 @@
+monolog:
+    channels:
+        - deprecation # Deprecations are logged in the dedicated "deprecation" channel when it exists
+        - audio       # TTS / FFmpeg pipeline
+        - social      # Facebook / social publishing
+        - donation    # UPI contributions
+        - security    # authentication & authorization events
+        - jobs        # cron / scheduled jobs
+
+when@dev:
+    monolog:
+        handlers:
+            main:
+                type: stream
+                path: "%kernel.logs_dir%/%kernel.environment%.log"
+                level: debug
+                channels: ["!event", "!audio", "!social", "!donation", "!jobs"]
+            audio:
+                type: stream
+                path: "%kernel.logs_dir%/audio.log"
+                level: debug
+                channels: ["audio"]
+            social:
+                type: stream
+                path: "%kernel.logs_dir%/social.log"
+                level: debug
+                channels: ["social"]
+            donation:
+                type: stream
+                path: "%kernel.logs_dir%/donation.log"
+                level: debug
+                channels: ["donation"]
+            jobs:
+                type: stream
+                path: "%kernel.logs_dir%/jobs.log"
+                level: debug
+                channels: ["jobs"]
+            console:
+                type: console
+                process_psr_3_messages: false
+                channels: ["!event", "!doctrine", "!console"]
+
+when@test:
+    monolog:
+        handlers:
+            main:
+                type: fingers_crossed
+                action_level: error
+                handler: nested
+                excluded_http_codes: [404, 405]
+                channels: ["!event"]
+            nested:
+                type: stream
+                path: "%kernel.logs_dir%/%kernel.environment%.log"
+                level: debug
+
+when@prod:
+    monolog:
+        handlers:
+            main:
+                type: fingers_crossed
+                action_level: error
+                handler: nested
+                excluded_http_codes: [404, 405]
+                channels: ["!deprecation", "!audio", "!social", "!donation", "!jobs"]
+                buffer_size: 50
+            nested:
+                type: rotating_file
+                path: "%kernel.logs_dir%/%kernel.environment%.log"
+                level: debug
+                max_files: 14
+            audio:
+                type: rotating_file
+                path: "%kernel.logs_dir%/audio.log"
+                level: info
+                max_files: 14
+                channels: ["audio"]
+            social:
+                type: rotating_file
+                path: "%kernel.logs_dir%/social.log"
+                level: info
+                max_files: 14
+                channels: ["social"]
+            donation:
+                type: rotating_file
+                path: "%kernel.logs_dir%/donation.log"
+                level: info
+                max_files: 30
+                channels: ["donation"]
+            jobs:
+                type: rotating_file
+                path: "%kernel.logs_dir%/jobs.log"
+                level: info
+                max_files: 14
+                channels: ["jobs"]
+            console:
+                type: console
+                process_psr_3_messages: false
+                channels: ["!event", "!doctrine"]

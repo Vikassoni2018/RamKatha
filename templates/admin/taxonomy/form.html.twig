@@ -1,0 +1,39 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+{% form_theme form 'form/admin_theme.html.twig' %}
+
+{% block title %}{{ isNew ? 'New' : term.name }} · {{ label }}{% endblock %}
+{% block breadcrumbs %}
+    <li><a href="{{ path('admin_taxonomy_index', {type: type}) }}">{{ label }}</a></li>
+    <li><span aria-current="page">{{ isNew ? 'New' : term.name }}</span></li>
+{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div><h1>{{ isNew ? 'New entry' : term.name }}</h1>{% if not isNew %}<p>Public URL: /{{ segment }}/{{ term.slug }}</p>{% endif %}</div>
+</div>
+<div class="panel-grid">
+    <div class="card">
+        <div class="card-body">
+            {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+                <div class="form-row form-row-2">{{ form_row(form.name) }}{{ form_row(form.nameEn) }}</div>
+                {{ form_row(form.slug) }}
+                {{ form_row(form.description) }}
+                {{ form_rest(form) }}
+                <div class="form-actions">
+                    <button class="btn btn-primary" type="submit">{{ icon('check', 'icon-sm') }} Save</button>
+                    <a class="btn btn-ghost" href="{{ path('admin_taxonomy_index', {type: type}) }}">Cancel</a>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+    {% if not isNew %}
+        <aside class="stack">
+            <div class="card card-soft"><div class="card-body text-sm">
+                <p>Entries in use by stories cannot be deleted — uncheck “Active” to hide them instead.</p>
+                {{ ui.post_button(path('admin_taxonomy_delete', {type: type, id: term.id}), 'Delete', {icon: 'trash', class: 'btn btn-sm btn-danger-outline', confirm: 'Delete “' ~ term.name ~ '”?', danger: true, title: 'Delete'}) }}
+            </div></div>
+        </aside>
+    {% endif %}
+</div>
+{% endblock %}

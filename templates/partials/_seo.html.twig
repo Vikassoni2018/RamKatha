@@ -1,0 +1,36 @@
+{# Meta tags from App\Service\Seo\SeoMetadata. All URLs are absolute (SITE_URL based). #}
+{% if seo %}
+    {% if seo.description %}<meta name="description" content="{{ seo.description }}">{% endif %}
+    <meta name="robots" content="{{ seo.robots }}">
+    {% if seo.canonical %}<link rel="canonical" href="{{ seo.canonical }}">{% endif %}
+    {# Hindi/English versions of this page; x-default is the Hindi original. #}
+    {% if seo.alternates|length > 1 %}
+        {% for locale, url in seo.alternates %}<link rel="alternate" hreflang="{{ locale }}" href="{{ url }}">{% endfor %}
+        <link rel="alternate" hreflang="x-default" href="{{ seo.alternates|first }}">
+    {% endif %}
+
+    <meta property="og:site_name" content="{{ seo.siteName }}">
+    <meta property="og:type" content="{{ seo.ogType }}">
+    <meta property="og:title" content="{{ seo.title }}">
+    {% if seo.description %}<meta property="og:description" content="{{ seo.description }}">{% endif %}
+    {% if seo.canonical %}<meta property="og:url" content="{{ seo.canonical }}">{% endif %}
+    <meta property="og:locale" content="{{ seo.locale }}">
+    {% for locale, url in seo.alternates|filter((url, locale) => locale != app.locale) %}<meta property="og:locale:alternate" content="{{ og_locale(locale) }}">{% endfor %}
+    {% if seo.image %}
+        <meta property="og:image" content="{{ seo.image }}">
+        {% if seo.imageWidth %}<meta property="og:image:width" content="{{ seo.imageWidth }}">{% endif %}
+        {% if seo.imageHeight %}<meta property="og:image:height" content="{{ seo.imageHeight }}">{% endif %}
+        {% if seo.imageAlt %}<meta property="og:image:alt" content="{{ seo.imageAlt }}">{% endif %}
+    {% endif %}
+    {% if seo.publishedTime %}<meta property="article:published_time" content="{{ seo.publishedTime }}">{% endif %}
+    {% if seo.modifiedTime %}<meta property="article:modified_time" content="{{ seo.modifiedTime }}">{% endif %}
+
+    <meta name="twitter:card" content="{{ seo.image ? 'summary_large_image' : 'summary' }}">
+    <meta name="twitter:title" content="{{ seo.title }}">
+    {% if seo.description %}<meta name="twitter:description" content="{{ seo.description }}">{% endif %}
+    {% if seo.image %}<meta name="twitter:image" content="{{ seo.image }}">{% endif %}
+
+    {% for link in seo.links %}<link rel="{{ link.rel }}" href="{{ link.href }}">{% endfor %}
+{% else %}
+    <meta name="robots" content="noindex, follow">
+{% endif %}

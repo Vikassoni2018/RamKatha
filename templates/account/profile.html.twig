@@ -1,0 +1,14 @@
+{% extends 'account/_layout.html.twig' %}
+
+{% block account_body %}
+<h1 class="mb-6">{{ 'account.profile.title'|trans }}</h1>
+<div class="card">
+    <div class="card-body">
+        <p class="text-sm text-muted">{{ 'account.profile.email'|trans }} <strong>{{ app.user.email }}</strong> {% if app.user.verified %}<span class="badge badge-success">{{ 'account.profile.verified'|trans }}</span>{% endif %}</p>
+        {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+            {{ form_row(form.displayName) }}
+            <div class="form-actions"><button type="submit" class="btn btn-primary">{{ 'account.save'|trans }}</button></div>
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

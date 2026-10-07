@@ -1,0 +1,23 @@
+# Uploaded and generated media is data, never code.
+# Uploads are validated (JPEG/PNG/WebP only, real MIME sniffing, polyglot check); this is defence in depth.
+
+Options -Indexes -ExecCGI
+
+<FilesMatch "(?i)\.(php\d?|phtml|phar|pht|cgi|pl|py|sh|asp|aspx|jsp|html?|shtml)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+RemoveHandler .php .phtml .phar .php5 .php7 .php8
+RemoveType .php .phtml .phar .php5 .php7 .php8
+
+<IfModule mod_headers.c>
+    Header set X-Content-Type-Options "nosniff"
+    Header set Cache-Control "public, max-age=2592000"
+    # QR codes are generated SVGs; forbid any script execution if one is opened directly.
+    <FilesMatch "(?i)\.svg$">
+        Header set Content-Security-Policy "default-src 'none'; style-src 'unsafe-inline'; img-src data:"
+    </FilesMatch>
+</IfModule>

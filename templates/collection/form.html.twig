@@ -1,0 +1,19 @@
+{% extends 'account/_layout.html.twig' %}
+
+{% block account_body %}
+<h1 class="mb-6">{{ (collection ? 'collection.edit_title' : 'collection.new_title')|trans }}</h1>
+<div class="card">
+    <div class="card-body">
+        {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+            {{ form_row(form.name) }}
+            {{ form_row(form.description) }}
+            {{ form_row(form.visibility) }}
+            <p class="form-help">{{ 'collection.form.unlisted_help'|trans }}</p>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">{{ 'account.save'|trans }}</button>
+                <a class="btn btn-ghost" href="{{ collection ? path('app_collection_show', {uuid: collection.uuid.toRfc4122}) : path('app_collection_index') }}">{{ 'account.cancel'|trans }}</a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}

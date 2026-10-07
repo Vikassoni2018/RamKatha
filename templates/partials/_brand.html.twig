@@ -1,0 +1,9 @@
+{% set logo = media_by_id(setting('logo_media_id')) %}
+<a class="brand" href="{{ path('app_home') }}" aria-label="{{ 'layout.brand_home'|trans({'%site_name%': setting('site_name')}) }}">
+    {% if logo %}
+        <img src="{{ media_url(logo, 'thumb') }}" alt="" width="{{ logo.width|default(120) }}" height="{{ logo.height|default(40) }}">
+    {% else %}
+        <span class="brand-mark">{{ icon('diya') }}</span>
+    {% endif %}
+    <span>{{ setting('site_name') }}</span>
+</a>

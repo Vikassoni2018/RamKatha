@@ -1,0 +1,26 @@
+{% extends 'account/_layout.html.twig' %}
+
+{% block account_body %}
+<h1 class="mb-6">{{ 'account.history.title'|trans }}</h1>
+{% if entries|length > 0 %}
+    <div class="stack">
+        {% for entry in entries %}
+            {% set s = entry.story %}
+            <a class="continue-card" href="{{ path('app_story_show', {slug: s.slug}) }}">
+                <twig:Cover :media="s.coverImage" variant="thumb" />
+                <span class="continue-card-body">
+                    <span class="continue-card-title"{{ lang_attr(s, 'title') }}>{{ s|localized('title') }}</span>
+                    <span class="text-xs text-muted">
+                        {% if entry.completed %}✓ {{ 'account.history.completed'|trans }}{% elseif entry.audioPositionSeconds > 0 %}{{ icon('headphones', 'icon-sm') }} {{ 'account.history.listened_until'|trans({'%time%': entry.audioPositionSeconds|duration}) }}{% endif %}
+                        {% if entry.readingProgressPercent > 0 %} · {{ icon('book-open', 'icon-sm') }} {{ 'account.progress.percent_read'|trans({'%percent%': entry.readingProgressPercent ~ '%'}) }}{% endif %}
+                        · {{ entry.updatedAt|long_date }}
+                    </span>
+                </span>
+            </a>
+        {% endfor %}
+    </div>
+    <twig:Pagination :paginator="entries" />
+{% else %}
+    <twig:EmptyState icon="clock" :title="'account.history.empty_title'|trans" :text="'account.history.empty_text'|trans" :actionUrl="path('app_story_index')" :actionLabel="'account.browse_stories'|trans" />
+{% endif %}
+{% endblock %}

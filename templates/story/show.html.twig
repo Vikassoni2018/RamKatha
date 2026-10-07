@@ -1,0 +1,135 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+{% if preview %}
+    <div class="preview-banner" role="status">
+        {{ icon('eye', 'icon-sm') }} <strong>Preview</strong> — not public · status: {{ story.status.label }} ·
+        <a href="{{ path('admin_story_edit', {id: story.id}) }}" data-turbo="false">Back to editor</a>
+    </div>
+{% endif %}
+
+{% set isDemo = story.tags|filter(t => t.slug == 'demo-content')|length > 0 %}
+<div data-controller="reading"
+     data-reading-story-value="{{ story.uuid.toRfc4122 }}"
+     data-reading-progress-url-value="{{ app.user ? path('api_progress') : '' }}"
+     data-reading-authenticated-value="{{ app.user ? 'true' : 'false' }}"
+     data-reading-preview-value="{{ preview ? 'true' : 'false' }}">
+    <div class="reading-progress" aria-hidden="true"><span data-reading-target="bar"></span></div>
+
+    <article class="story container container-reading" aria-labelledby="story-title">
+        <header class="story-header">
+            {% if seo %}<twig:Breadcrumbs :items="seo.breadcrumbs" />{% endif %}
+            {% if app.locale == 'en' and not story.hasEnglishVersion %}
+                {# English page of a story that has no English version yet: the Hindi original follows. #}
+                <div class="alert" role="note">
+                    {{ icon('globe') }}
+                    <div class="alert-content"><p class="mb-0">{{ 'i18n.story_not_translated'|trans }}</p></div>
+                </div>
+            {% endif %}
+            <div class="story-kicker">
+                {% for category in story.categories|slice(0, 2) %}
+                    <a class="badge badge-accent" href="{{ path('app_taxonomy_show', {segment: 'category', slug: category.slug}) }}"{{ lang_attr(category, 'name') }}>{{ category|localized('name') }}</a>
+                {% endfor %}
+                {% if story.isSourceVerified %}
+                    <span class="badge badge-verified" title="{{ 'story.verified_by_reviewer'|trans }}">{{ icon('shield-check') }} {{ 'common.source_verified'|trans }}</span>
+                {% endif %}
+                <span class="badge badge-neutral">{{ ('source_type.' ~ story.sourceType.value ~ '.label')|trans }}</span>
+                {% if isDemo %}<span class="badge badge-demo">{{ 'common.demo_content'|trans }}</span>{% endif %}
+            </div>
+            <h1 class="story-title" id="story-title"{{ lang_attr(story, 'title') }}>{{ story|localized('title') }}</h1>
+            {% if story.originalTitle %}<p class="story-original-title" lang="sa">{{ story.originalTitle }}</p>{% endif %}
+            {% set subtitle = story|localized('subtitle') %}
+            {% if subtitle %}<p class="story-subtitle"{{ lang_attr(story, 'subtitle') }}>{{ subtitle }}</p>{% endif %}
+            <div class="story-meta">
+                <span>{{ icon('book-open', 'icon-sm') }} {{ 'common.read_minutes'|trans({'%minutes%': story.readingTimeMinutesFor(app.locale)}) }}</span>
+                {% if story.hasPlayableAudio %}<span>{{ icon('headphones', 'icon-sm') }} {{ 'story.listen_duration'|trans({'%duration%': story.audioDurationSeconds|duration_words}) }}</span>{% endif %}
+                {% if story.publishedAt %}<span>{{ icon('calendar', 'icon-sm') }} <time datetime="{{ story.publishedAt|date('c') }}">{{ story.publishedAt|long_date }}</time></span>{% endif %}
+                {% if story.scripture %}<span>{{ icon('book', 'icon-sm') }} <a href="{{ path('app_taxonomy_show', {segment: 'granth', slug: story.scripture.slug}) }}"{{ lang_attr(story.scripture, 'name') }}>{{ story.scripture|localized('name') }}</a></span>{% endif %}
+            </div>
+        </header>
+
+        {% if story.coverImage %}
+            <figure class="story-cover"{{ lang_attr(story, 'title') }}>
+                <twig:Cover :media="story.coverImage" variant="large" sizes="(min-width: 800px) 740px, 100vw" :eager="true" :alt="story|localized('title')" />
+            </figure>
+        {% endif %}
+
+        {% include 'story/_listen.html.twig' %}
+
+        <div class="story-actions">
+            {% set authenticated = app.user ? 'true' : 'false' %}
+            <button type="button" class="btn btn-sm" aria-pressed="{{ bookmarked ? 'true' : 'false' }}"
+                    data-controller="bookmark"
+                    data-bookmark-url-value="{{ path('api_bookmark', {uuid: story.uuid.toRfc4122}) }}"
+                    data-bookmark-bookmarked-value="{{ bookmarked ? 'true' : 'false' }}"
+                    data-bookmark-authenticated-value="{{ authenticated }}"
+                    data-action="bookmark#toggle">
+                <span data-bookmark-target="iconOn" {% if not bookmarked %}hidden{% endif %}>{{ icon('bookmark-filled') }}</span>
+                <span data-bookmark-target="iconOff" {% if bookmarked %}hidden{% endif %}>{{ icon('bookmark') }}</span>
+                <span class="btn-label" data-bookmark-target="label">{{ (bookmarked ? 'story.bookmark.saved' : 'story.bookmark.save')|trans }}</span>
+            </button>
+
+            <div data-controller="collection-picker"
+                 data-collection-picker-list-url-value="{{ path('api_collections') }}"
+                 data-collection-picker-create-url-value="{{ path('api_collections_create') }}"
+                 data-collection-picker-story-value="{{ story.uuid.toRfc4122 }}"
+                 data-collection-picker-authenticated-value="{{ authenticated }}">
+                <button type="button" class="btn btn-sm" data-action="collection-picker#open" aria-haspopup="dialog">
+                    {{ icon('folder') }} <span class="btn-label">{{ 'story.collection.add'|trans }}</span>
+                </button>
+                <dialog class="modal" aria-labelledby="picker-title" data-collection-picker-target="dialog" data-action="click->collection-picker#backdrop">
+                    <div class="modal-header">
+                        <h2 id="picker-title">{{ 'story.collection.add'|trans }}</h2>
+                        <button type="button" class="btn btn-ghost btn-icon" aria-label="{{ 'common.close'|trans }}" data-action="collection-picker#close">{{ icon('close') }}</button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-sm text-muted" data-collection-picker-target="status" aria-live="polite"></p>
+                        <ul class="picker-list" data-collection-picker-target="list"></ul>
+                        <form class="stack-sm" data-collection-picker-target="form" data-action="collection-picker#create">
+                            <label class="form-label" for="new-collection-name">{{ 'story.collection.new'|trans }}</label>
+                            <div class="cluster">
+                                <input id="new-collection-name" class="form-control grow" maxlength="120" placeholder="{{ 'story.collection.name_placeholder'|trans }}" data-collection-picker-target="name">
+                                <button type="submit" class="btn btn-secondary">{{ icon('plus', 'icon-sm') }} {{ 'story.collection.create'|trans }}</button>
+                            </div>
+                        </form>
+                    </div>
+                </dialog>
+            </div>
+
+            <span class="spacer"></span>
+            {% include 'story/_share.html.twig' %}
+        </div>
+
+        <div class="story-body" data-reading-target="body"{{ lang_attr(story, 'body') }}>
+            {{ story|localized('body')|sanitize_html('app.story_sanitizer') }}
+        </div>
+
+        {% include 'story/_source_box.html.twig' %}
+
+        <p class="disclaimer">{{ icon('info', 'icon-sm') }} {{ setting('content_disclaimer') }}</p>
+
+        {% if story.tags is not empty %}
+            <nav class="story-tags" aria-label="{{ 'taxonomy.tag.plural'|trans }}">
+                {% for tag in story.tags %}
+                    <a class="chip" href="{{ path('app_taxonomy_show', {segment: 'tag', slug: tag.slug}) }}"{{ lang_attr(tag, 'name') }}>#{{ tag|localized('name') }}</a>
+                {% endfor %}
+            </nav>
+        {% endif %}
+
+        {% include 'story/_series_nav.html.twig' %}
+
+        {% if story.showDonationCta and features.donationsEnabled and not preview %}
+            {% include 'support/_support_card.html.twig' with {story: story, presets: donationPresets} %}
+        {% endif %}
+    </article>
+</div>
+
+{% if related is not empty %}
+    <section class="container related" aria-labelledby="related-title">
+        <twig:SectionHeader :title="'story.related'|trans" id="related-title" />
+        <div class="grid grid-cards">
+            {% for r in related %}<twig:StoryCard :story="r" />{% endfor %}
+        </div>
+    </section>
+{% endif %}
+{% endblock %}

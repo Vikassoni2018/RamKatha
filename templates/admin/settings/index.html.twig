@@ -1,0 +1,18 @@
+{% extends 'admin/layout.html.twig' %}
+{% form_theme form 'form/admin_theme.html.twig' %}
+
+{% block title %}Settings{% endblock %}
+{% block breadcrumbs %}<li><span aria-current="page">Settings</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header"><div><h1>Settings</h1><p>Secrets (database, mail, Facebook token, TTS keys) are configured in the environment, not here.</p></div></div>
+<nav class="cluster mb-4" aria-label="Settings groups">
+    {% for key, label in groups %}<a class="chip {{ group == key ? 'is-active' }}" href="{{ path('admin_settings', {group: key}) }}">{{ label }}</a>{% endfor %}
+</nav>
+<div class="card"><div class="card-body">
+    {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+        {{ form_rest(form) }}
+        <div class="form-actions"><button class="btn btn-primary" type="submit">{{ icon('check', 'icon-sm') }} Save {{ groups[group]|lower }}</button></div>
+    {{ form_end(form) }}
+</div></div>
+{% endblock %}

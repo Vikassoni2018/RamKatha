@@ -1,0 +1,53 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}Audio{% endblock %}
+{% block breadcrumbs %}<li><span aria-current="page">Audio</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div><h1>Audio narrations</h1><p>Generated Hindi narration files (stored on the private local disk).</p></div>
+    <div class="actions"><a class="btn btn-sm" href="{{ path('admin_audio_queue') }}">{{ icon('refresh', 'icon-sm') }} TTS queue</a><a class="btn btn-sm" href="{{ path('admin_pronunciation_index') }}">{{ icon('mic', 'icon-sm') }} Pronunciation</a></div>
+</div>
+
+<div class="stat-grid">
+    <div class="stat-card {{ provider.configured ? 'is-success' : 'is-warning' }}"><span class="stat-label">TTS provider</span><span class="stat-value">{{ provider.name }}</span><span class="stat-sub">{{ provider.configured ? 'configured · ' ~ language : 'not configured' }}</span></div>
+    <div class="stat-card {{ ffmpeg ? 'is-success' : 'is-warning' }}"><span class="stat-label">FFmpeg</span><span class="stat-value">{{ ffmpeg ? 'OK' : 'Missing' }}</span><span class="stat-sub">{{ ffmpeg ? ffmpeg|truncate_words(40) : 'required to merge/encode' }}</span></div>
+</div>
+{% if unavailable %}
+    {% include 'partials/_alert.html.twig' with {type: 'warning', title: 'Feature is not configured', message: unavailable ~ ' — see README → Text-to-speech.'} only %}
+{% endif %}
+
+<nav class="cluster mb-4" aria-label="Filter">
+    <a class="chip {{ status is null ? 'is-active' }}" href="{{ path('admin_audio_index') }}">All</a>
+    {% for s in enum('App\\Enum\\AudioStatus').cases() %}<a class="chip {{ status == s ? 'is-active' }}" href="{{ path('admin_audio_index', {status: s.value}) }}">{{ s.label }}</a>{% endfor %}
+</nav>
+
+{% if assets|length > 0 %}
+    <div class="admin-table-card">
+        <table class="admin-table">
+            <thead><tr><th>#</th><th>Story</th><th>Status</th><th>Duration</th><th>Provider / voice</th><th class="num">Attempts</th><th>Updated</th><th class="cell-actions"><span class="visually-hidden">Actions</span></th></tr></thead>
+            <tbody>
+                {% for a in assets %}
+                    <tr>
+                        <td data-label="#">{{ a.id }}</td>
+                        <td class="cell-main" data-label="Story"><a class="cell-title" href="{{ path('admin_story_edit', {id: a.story.id}) }}">{{ a.story.title }}</a>{% if a.errorMessage %}<span class="cell-sub text-danger">{{ a.errorMessage|truncate_words(160) }}</span>{% endif %}</td>
+                        <td data-label="Status">{{ ui.status_badge(a.status) }}</td>
+                        <td data-label="Duration">{{ a.durationSeconds ? a.durationSeconds|duration : '—' }}{% if a.fileSize %}<span class="cell-sub">{{ a.fileSize|file_size }}</span>{% endif %}</td>
+                        <td data-label="Provider">{{ a.provider }}{% if a.voice %}<span class="cell-sub">{{ a.voice }}</span>{% endif %}</td>
+                        <td class="num" data-label="Attempts">{{ a.attempts }}</td>
+                        <td data-label="Updated">{{ a.updatedAt|ago }}</td>
+                        <td class="cell-actions">
+                            {% if a.status.value == 'ready' %}<a class="btn btn-ghost btn-sm" href="{{ path('app_audio_stream', {uuid: a.uuid.toRfc4122}) }}" target="_blank" rel="noopener" data-turbo="false">{{ icon('play', 'icon-sm') }} Listen</a>{% endif %}
+                            {% if a.status.value == 'failed' and not unavailable %}{{ ui.post_button(path('admin_audio_retry', {id: a.id}), 'Retry', {icon: 'refresh', class: 'btn btn-ghost btn-sm'}) }}{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="table-footer"><span>{{ assets.totalItems }} total</span><twig:Pagination :paginator="assets" :summary="false" label="Pagination" previous="Previous" next="Next" /></div>
+    </div>
+{% else %}
+    {{ ui.empty('headphones', 'No narration yet', 'Open a story and use “Generate narration”.') }}
+{% endif %}
+{% endblock %}

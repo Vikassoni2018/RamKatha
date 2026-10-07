@@ -1,0 +1,26 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+{% form_theme form 'form/admin_theme.html.twig' %}
+
+{% block title %}{{ isNew ? 'New page' : page.title }}{% endblock %}
+{% block breadcrumbs %}<li><a href="{{ path('admin_page_index') }}">Pages</a></li><li><span aria-current="page">{{ isNew ? 'New' : page.title }}</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div><h1>{{ isNew ? 'New page' : page.title }}</h1>{% if not isNew %}<p>Updated {{ page.updatedAt|ago }}{% if page.updatedBy %} by {{ page.updatedBy.displayName }}{% endif %}</p>{% endif %}</div>
+    <div class="actions">
+        {% if not isNew %}<a class="btn btn-sm" href="{{ path('app_page', {slug: page.slug}) }}" target="_blank" rel="noopener">{{ icon('external-link', 'icon-sm') }} View</a>{% endif %}
+        {% if not isNew and is_granted('ROLE_ADMIN') %}{{ ui.post_button(path('admin_page_delete', {id: page.id}), 'Delete', {icon: 'trash', class: 'btn btn-sm btn-danger-outline', confirm: 'Delete this page?', danger: true, title: 'Delete page'}) }}{% endif %}
+    </div>
+</div>
+<div class="card"><div class="card-body">
+    {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+        <div class="form-row form-row-2">{{ form_row(form.title) }}{{ form_row(form.slug) }}</div>
+        <div data-controller="rich-editor">{{ form_row(form.body) }}</div>
+        <div class="form-row form-row-2">{{ form_row(form.seoTitle) }}{{ form_row(form.position) }}</div>
+        {{ form_row(form.seoDescription) }}
+        <div class="form-row form-row-2">{{ form_row(form.isPublished) }}{{ form_row(form.showInFooter) }}</div>
+        <div class="form-actions"><button class="btn btn-primary" type="submit">{{ icon('check', 'icon-sm') }} Save</button><a class="btn btn-ghost" href="{{ path('admin_page_index') }}">Cancel</a></div>
+    {{ form_end(form) }}
+</div></div>
+{% endblock %}

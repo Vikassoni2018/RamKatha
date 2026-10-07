@@ -1,0 +1,43 @@
+{% import 'admin/_macros.html.twig' as ui %}
+<section class="card" aria-labelledby="audio-title">
+    <div class="card-header"><h2 id="audio-title">{{ icon('headphones', 'icon-sm') }} Narration</h2>{{ ui.status_badge(story.audioStatus) }}</div>
+    <div class="card-body stack">
+        {% if story.currentAudio and story.currentAudio.status.value == 'ready' %}
+            <audio class="audio-preview" controls preload="none" src="{{ path('app_audio_stream', {uuid: story.currentAudio.uuid.toRfc4122}) }}"></audio>
+            <p class="text-xs text-muted mb-0">{{ story.currentAudio.durationSeconds|duration }} · {{ story.currentAudio.fileSize|file_size }} · {{ story.currentAudio.provider }}{% if story.currentAudio.voice %} / {{ story.currentAudio.voice }}{% endif %} · {{ story.currentAudio.chunkCount }} chunk(s)</p>
+            {% if story.audioOutdated %}<p class="text-xs mb-0 text-warning">The text changed after this narration was generated.</p>{% endif %}
+        {% elseif not story.audioEnabled %}
+            <p class="text-sm text-muted mb-0">Narration is disabled for this story.</p>
+        {% else %}
+            <p class="text-sm text-muted mb-0">No narration yet.</p>
+        {% endif %}
+
+        {% if audioUnavailable %}
+            <div class="alert alert-warning mb-0">{{ icon('alert-triangle') }}<div class="alert-content"><p class="alert-title">Feature is not configured</p><p>{{ audioUnavailable }}</p></div></div>
+        {% elseif is_granted('STORY_MANAGE_AUDIO', story) and story.audioEnabled %}
+            {{ ui.post_button(path('admin_story_audio', {id: story.id}), story.currentAudio ? 'Regenerate narration' : 'Generate narration', {icon: 'mic', class: 'btn btn-secondary btn-sm btn-block'}) }}
+        {% endif %}
+
+        {% if audioAssets is not empty %}
+            <details>
+                <summary class="text-sm">Generation history ({{ audioAssets|length }})</summary>
+                <ul class="check-list">
+                    {% for a in audioAssets %}
+                        <li>
+                            {{ ui.check_icon(a.status.value == 'ready' ? 'ok' : (a.status.value == 'failed' ? 'error' : 'warn')) }}
+                            <span>#{{ a.id }} {{ ui.status_badge(a.status) }} <span class="cell-sub">{{ a.createdAt|ago }} · attempts {{ a.attempts }}</span>
+                                {% if a.errorMessage %}<span class="cell-sub text-danger">{{ a.errorMessage|truncate_words(300) }}</span>{% endif %}
+                                {% if a.status.value == 'failed' and not audioUnavailable %}
+                                    {{ ui.post_button(path('admin_audio_retry', {id: a.id}), 'Retry', {icon: 'refresh', class: 'btn btn-ghost btn-sm', fields: {return: 'story'}}) }}
+                                {% endif %}
+                                {% if a.status.value == 'ready' and story.currentAudio and story.currentAudio.id == a.id %}
+                                    {{ ui.post_button(path('admin_audio_disable', {id: a.id}), 'Disable', {icon: 'volume-x', class: 'btn btn-ghost btn-sm', confirm: 'Stop playing this narration on the website?', danger: true, title: 'Disable narration'}) }}
+                                {% endif %}
+                            </span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </details>
+        {% endif %}
+    </div>
+</section>

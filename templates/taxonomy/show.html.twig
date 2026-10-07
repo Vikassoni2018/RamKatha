@@ -1,0 +1,49 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="container">
+    <header class="page-hero">
+        <twig:Breadcrumbs :items="seo.breadcrumbs" />
+        <div class="term-header {{ term.coverImage ? 'has-image' }}">
+            {% if term.coverImage %}
+                <img src="{{ media_url(term.coverImage, 'card') }}" alt="" width="160" height="160">
+            {% endif %}
+            <div>
+                <span class="eyebrow">{{ taxonomy_label(key) }}</span>
+                <h1{{ lang_attr(term, 'name') }}>{{ term|localized('name') }}</h1>
+                {# Hindi pages show the English name below the title; English pages (whose title already is
+                   the English name) show the Hindi original there instead. #}
+                {% if app.locale != 'en' %}
+                    {% if term.nameEn %}<p class="text-muted mb-0">{{ term.nameEn }}</p>{% endif %}
+                {% elseif term.nameEn %}
+                    <p class="text-muted mb-0" lang="hi">{{ term.name }}</p>
+                {% endif %}
+                {% if key == 'scripture' and (term|localized('attributedTo') or term|localized('originalLanguage')) %}
+                    <p class="text-sm text-muted">{% if term|localized('attributedTo') %}{{ 'browse.attributed_to'|trans }} <span{{ lang_attr(term, 'attributedTo') }}>{{ term|localized('attributedTo') }}</span>{% endif %}{% if term|localized('originalLanguage') %} · {{ 'browse.original_language'|trans }} <span{{ lang_attr(term, 'originalLanguage') }}>{{ term|localized('originalLanguage') }}</span>{% endif %}</p>
+                {% endif %}
+                {% if key == 'festival' and (term.nextOccurrenceOn or term|localized('typicalPeriod')) %}
+                    <p class="text-sm text-muted">{% if term|localized('typicalPeriod') %}<span{{ lang_attr(term, 'typicalPeriod') }}>{{ term|localized('typicalPeriod') }}</span>{% endif %}{% if term.nextOccurrenceOn %} · {{ 'browse.next_date'|trans }} {{ term.nextOccurrenceOn|long_date }}{% endif %}</p>
+                {% endif %}
+                {% if term|localized('description') %}<p class="lead"{{ lang_attr(term, 'description') }}>{{ term|localized('description') }}</p>{% endif %}
+            </div>
+        </div>
+    </header>
+
+    <div class="listing-layout with-filters">
+        <aside aria-label="{{ 'filters.label'|trans }}">
+            {% include 'story/_filters.html.twig' with {action: path('app_taxonomy_show', {segment: segment, slug: term.slug}), facets: {}, filter: filter, lock: key} %}
+        </aside>
+        <div>
+            <div class="toolbar"><p class="result-count mb-0" role="status">{{ 'common.stories_count'|trans({'%count%': stories.totalItems}) }}</p></div>
+            {% if stories|length > 0 %}
+                <div class="grid grid-cards">
+                    {% for story in stories %}<twig:StoryCard :story="story" :headingLevel="2" />{% endfor %}
+                </div>
+                <twig:Pagination :paginator="stories" />
+            {% else %}
+                <twig:EmptyState icon="book-open" :title="'browse.show.empty_title'|trans" :text="'browse.show.empty_text'|trans" :actionUrl="path('app_story_index')" :actionLabel="'story.view_all'|trans" />
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

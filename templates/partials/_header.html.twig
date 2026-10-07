@@ -1,0 +1,113 @@
+{% set route = canonical_route() %}
+{% set nav = [
+    {label: 'layout.stories'|trans, route: 'app_story_index', params: {}, active: route starts with 'app_story'},
+    {label: 'taxonomy.category.plural'|trans, route: 'app_taxonomy_index', params: {segment: 'category'}, active: app.request.attributes.get('segment') == 'category'},
+    {label: 'taxonomy.scripture.plural'|trans, route: 'app_taxonomy_index', params: {segment: 'granth'}, active: app.request.attributes.get('segment') == 'granth'},
+    {label: 'header.series'|trans, route: 'app_taxonomy_index', params: {segment: 'series'}, active: app.request.attributes.get('segment') == 'series'},
+] %}
+<header class="site-header" data-controller="nav">
+    <div class="container">
+        {% include 'partials/_brand.html.twig' %}
+
+        <nav class="main-nav" aria-label="{{ 'header.main_nav'|trans }}">
+            <ul>
+                {% for item in nav %}
+                    <li><a href="{{ path(item.route, item.params) }}" {% if item.active %}aria-current="page"{% endif %}>{{ item.label }}</a></li>
+                {% endfor %}
+            </ul>
+        </nav>
+
+        <div class="header-actions">
+            <form class="header-search search-field" action="{{ path('app_search') }}" method="get" role="search"
+                  data-controller="search-suggest" data-search-suggest-url-value="{{ path('api_search_suggest') }}">
+                <label class="visually-hidden" for="header-q">{{ 'header.search_label'|trans }}</label>
+                {{ icon('search', 'icon-sm') }}
+                <input id="header-q" class="form-control" type="search" name="q" placeholder="{{ 'header.search_placeholder'|trans }}" autocomplete="off"
+                       value="{{ app.request.query.get('q')|default('') }}"
+                       data-search-suggest-target="input" data-action="input->search-suggest#input keydown->search-suggest#keydown">
+                <ul class="suggestions" id="header-suggestions" role="listbox" hidden data-search-suggest-target="list"></ul>
+            </form>
+
+            <button type="button" class="btn btn-ghost btn-icon header-search-toggle" aria-label="{{ 'header.search_toggle'|trans }}" aria-expanded="false" aria-controls="mobile-search"
+                    data-nav-target="searchToggle" data-action="nav#toggleSearch">{{ icon('search') }}</button>
+
+            {% if features.donationsEnabled %}
+                <a class="btn btn-ghost btn-sm btn-support" href="{{ path('app_support') }}">{{ icon('heart', 'icon-sm') }} {{ 'layout.support'|trans }}</a>
+            {% endif %}
+
+            {% include 'partials/_language_switch.html.twig' with {variant: 'header'} only %}
+
+            {% if app.user %}
+                <details class="dropdown">
+                    <summary class="btn btn-ghost btn-icon" aria-label="{{ 'layout.my_account'|trans }}">{{ icon('user') }}</summary>
+                    <div class="dropdown-menu" role="menu">
+                        <div class="dropdown-header" data-user-content>{{ app.user.displayName }}</div>
+                        <a role="menuitem" href="{{ path('app_account') }}">{{ icon('user', 'icon-sm') }} {{ 'layout.my_account'|trans }}</a>
+                        <a role="menuitem" href="{{ path('app_account_bookmarks') }}">{{ icon('bookmark', 'icon-sm') }} {{ 'layout.saved_stories'|trans }}</a>
+                        <a role="menuitem" href="{{ path('app_collection_index') }}">{{ icon('folder', 'icon-sm') }} {{ 'layout.my_collections'|trans }}</a>
+                        <a role="menuitem" href="{{ path('app_account_history') }}">{{ icon('clock', 'icon-sm') }} {{ 'header.listening_history'|trans }}</a>
+                        {% if is_granted('ROLE_STAFF') %}
+                            <hr>
+                            <a role="menuitem" href="{{ path('admin_dashboard') }}" data-turbo="false">{{ icon('grid', 'icon-sm') }} Admin panel</a>
+                        {% endif %}
+                        <hr>
+                        <form method="post" action="{{ path('app_logout') }}" data-turbo="false">
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('logout') }}" data-controller="csrf-protection">
+                            <button type="submit" role="menuitem">{{ icon('log-out', 'icon-sm') }} {{ 'header.log_out'|trans }}</button>
+                        </form>
+                    </div>
+                </details>
+            {% else %}
+                <a class="btn btn-ghost btn-icon" href="{{ path('app_login') }}" aria-label="{{ 'layout.log_in'|trans }}">{{ icon('user') }}</a>
+            {% endif %}
+
+            <button type="button" class="btn btn-ghost btn-icon nav-toggle" aria-label="{{ 'header.open_menu'|trans }}" aria-expanded="false" aria-controls="mobile-drawer"
+                    data-nav-target="toggle" data-action="nav#open">{{ icon('menu') }}</button>
+        </div>
+    </div>
+
+    <div class="search-panel" id="mobile-search" hidden data-nav-target="searchPanel">
+        <div class="container">
+            <form class="search-field" action="{{ path('app_search') }}" method="get" role="search"
+                  data-controller="search-suggest" data-search-suggest-url-value="{{ path('api_search_suggest') }}">
+                <label class="visually-hidden" for="mobile-q">{{ 'header.search_label'|trans }}</label>
+                {{ icon('search', 'icon-sm') }}
+                <input id="mobile-q" class="form-control" type="search" name="q" placeholder="{{ 'layout.search_placeholder_full'|trans }}" autocomplete="off"
+                       data-nav-target="searchInput" data-search-suggest-target="input" data-action="input->search-suggest#input keydown->search-suggest#keydown">
+                <ul class="suggestions" id="mobile-suggestions" role="listbox" hidden data-search-suggest-target="list"></ul>
+            </form>
+        </div>
+    </div>
+
+    <div class="drawer-backdrop" hidden data-nav-target="backdrop" data-action="click->nav#close"></div>
+    <aside class="drawer" id="mobile-drawer" aria-label="{{ 'header.menu'|trans }}" inert data-nav-target="drawer">
+        <div class="drawer-header">
+            {% include 'partials/_brand.html.twig' %}
+            <button type="button" class="btn btn-ghost btn-icon" aria-label="{{ 'header.close_menu'|trans }}" data-action="nav#close">{{ icon('close') }}</button>
+        </div>
+        <nav aria-label="{{ 'header.mobile_nav'|trans }}">
+            <ul>
+                <li><a href="{{ path('app_home') }}" {% if route == 'app_home' %}aria-current="page"{% endif %}>{{ icon('home') }} {{ 'header.home'|trans }}</a></li>
+                {% for item in nav %}
+                    <li><a href="{{ path(item.route, item.params) }}" {% if item.active %}aria-current="page"{% endif %}>{{ icon(loop.index == 1 ? 'book-open' : (loop.index == 2 ? 'layers' : (loop.index == 3 ? 'book' : 'list'))) }} {{ item.label }}</a></li>
+                {% endfor %}
+                <li><a href="{{ path('app_taxonomy_index', {segment: 'devta'}) }}">{{ icon('sun') }} {{ 'taxonomy.deity.plural'|trans }}</a></li>
+                <li><a href="{{ path('app_taxonomy_index', {segment: 'festival'}) }}">{{ icon('calendar') }} {{ 'taxonomy.festival.plural'|trans }}</a></li>
+            </ul>
+            <p class="drawer-section-title">{{ 'header.your_account'|trans }}</p>
+            <ul>
+                {% if app.user %}
+                    <li><a href="{{ path('app_account') }}">{{ icon('user') }} {{ 'layout.my_account'|trans }}</a></li>
+                    <li><a href="{{ path('app_account_bookmarks') }}">{{ icon('bookmark') }} {{ 'layout.saved_stories'|trans }}</a></li>
+                    <li><a href="{{ path('app_collection_index') }}">{{ icon('folder') }} {{ 'layout.my_collections'|trans }}</a></li>
+                {% else %}
+                    <li><a href="{{ path('app_login') }}">{{ icon('log-in') }} {{ 'layout.log_in'|trans }}</a></li>
+                    {% if features.registrationEnabled %}<li><a href="{{ path('app_register') }}">{{ icon('user') }} {{ 'header.create_account'|trans }}</a></li>{% endif %}
+                {% endif %}
+                {% if features.donationsEnabled %}<li><a href="{{ path('app_support') }}">{{ icon('heart') }} {{ 'layout.voluntary_support'|trans }}</a></li>{% endif %}
+            </ul>
+            <p class="drawer-section-title">{{ 'lang.switcher'|trans }}</p>
+            {% include 'partials/_language_switch.html.twig' with {variant: 'drawer'} only %}
+        </nav>
+    </aside>
+</header>

@@ -1,0 +1,31 @@
+{# Reusable pagination for App\Pagination\Paginator; keeps current query parameters.
+   Labels default to the page language; the admin passes its English labels explicitly.
+   The links regenerate the matched route with its own parameters; on localized pages those include
+   _locale, so /en/... pages paginate within /en and Hindi pages keep their original URLs. #}
+{% props paginator, label = null, summary = true, previous = null, next = null %}
+{% if paginator.hasToPaginate %}
+    {% set route = app.current_route %}
+    {% set params = app.request.attributes.get('_route_params')|merge(app.request.query.all) %}
+    <nav class="pagination" aria-label="{{ label ?: 'components.pagination.label'|trans }}">
+        <ul>
+            {% if paginator.hasPreviousPage %}
+                <li><a href="{{ path(route, params|merge({page: paginator.previousPage})) }}" rel="prev" aria-label="{{ previous ?: 'components.pagination.previous'|trans }}">{{ icon('chevron-left', 'icon-sm') }}</a></li>
+            {% endif %}
+            {% for page in paginator.pageWindow %}
+                {% if page is null %}
+                    <li><span class="gap" aria-hidden="true">…</span></li>
+                {% elseif page == paginator.currentPage %}
+                    <li><span aria-current="page">{{ page }}</span></li>
+                {% else %}
+                    <li><a href="{{ path(route, params|merge({page: page})) }}">{{ page }}</a></li>
+                {% endif %}
+            {% endfor %}
+            {% if paginator.hasNextPage %}
+                <li><a href="{{ path(route, params|merge({page: paginator.nextPage})) }}" rel="next" aria-label="{{ next ?: 'components.pagination.next'|trans }}">{{ icon('chevron-right', 'icon-sm') }}</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% if summary %}
+        <p class="pagination-summary">{{ paginator.firstItemNumber }}–{{ paginator.lastItemNumber }} / {{ paginator.totalItems }}</p>
+    {% endif %}
+{% endif %}

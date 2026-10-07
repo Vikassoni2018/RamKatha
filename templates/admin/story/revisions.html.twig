@@ -1,0 +1,37 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}Revisions · {{ story.title }}{% endblock %}
+{% block breadcrumbs %}
+    <li><a href="{{ path('admin_story_index') }}">Stories</a></li>
+    <li><a href="{{ path('admin_story_edit', {id: story.id}) }}">{{ story.title|truncate_words(30) }}</a></li>
+    <li><span aria-current="page">Revisions</span></li>
+{% endblock %}
+
+{% block body %}
+<div class="admin-page-header">
+    <div><h1>Revision history</h1><p>{{ story.title }} — content snapshots are recorded on creation and on every significant change.</p></div>
+    <div class="actions"><a class="btn btn-sm" href="{{ path('admin_story_edit', {id: story.id}) }}">{{ icon('arrow-left', 'icon-sm') }} Back to editor</a></div>
+</div>
+{% if revisions is not empty %}
+    <div class="admin-table-card">
+        <table class="admin-table">
+            <thead><tr><th>Version</th><th>Title</th><th>Summary</th><th>By</th><th>When</th><th class="cell-actions"><span class="visually-hidden">Actions</span></th></tr></thead>
+            <tbody>
+                {% for r in revisions %}
+                    <tr>
+                        <td data-label="Version"><strong>v{{ r.version }}</strong>{% if loop.first %} <span class="badge badge-success">current</span>{% endif %}</td>
+                        <td class="cell-main" data-label="Title">{{ r.title }}</td>
+                        <td data-label="Summary">{{ r.changeSummary ?: '—' }}</td>
+                        <td data-label="By">{{ r.changedBy ?: '—' }}</td>
+                        <td data-label="When">{{ r.createdAt|local_datetime }}</td>
+                        <td class="cell-actions"><a class="btn btn-ghost btn-sm" href="{{ path('admin_story_revision', {id: story.id, version: r.version}) }}">{{ icon('eye', 'icon-sm') }} View</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    {{ ui.empty('clock', 'No revisions yet', null) }}
+{% endif %}
+{% endblock %}

@@ -1,0 +1,76 @@
+{#
+  Filter sidebar shared by /katha, taxonomy pages and search. Plain GET form (works without JS);
+  selects auto-submit when JavaScript is available. "lock" hides the facet of the current page.
+#}
+{% set lock = lock|default(null) %}
+<div data-controller="toggle">
+    <button type="button" class="btn btn-sm filters-mobile-toggle" aria-expanded="false" aria-controls="story-filters"
+            data-toggle-target="trigger" data-action="toggle#toggle">{{ icon('filter', 'icon-sm') }} {{ 'filters.label'|trans }}</button>
+    <form id="story-filters" class="filters" method="get" action="{{ action }}" hidden data-toggle-target="content" data-controller="autosubmit">
+        <h2>{{ icon('filter', 'icon-sm') }} {{ 'filters.heading'|trans }}</h2>
+        {% if filter.query is not null %}<input type="hidden" name="q" value="{{ filter.query }}" data-user-content>{% endif %}
+
+        {% if facets.category is defined and lock != 'category' and facets.category is not empty %}
+            <div class="form-group">
+                <label class="form-label" for="f-category">{{ taxonomy_label('category') }}</label>
+                <select id="f-category" class="form-select" name="category" data-action="change->autosubmit#submit">
+                    <option value="">{{ 'filters.all'|trans }}</option>
+                    {% for t in facets.category %}<option value="{{ t.slug }}"{{ lang_attr(t, 'name') }} {% if filter.category and filter.category.slug == t.slug %}selected{% endif %}>{{ t|localized('name') }} ({{ t.total }})</option>{% endfor %}
+                </select>
+            </div>
+        {% endif %}
+        {% if facets.devta is defined and lock != 'deity' and facets.devta is not empty %}
+            <div class="form-group">
+                <label class="form-label" for="f-devta">{{ taxonomy_label('deity') }}</label>
+                <select id="f-devta" class="form-select" name="devta" data-action="change->autosubmit#submit">
+                    <option value="">{{ 'filters.all'|trans }}</option>
+                    {% for t in facets.devta %}<option value="{{ t.slug }}"{{ lang_attr(t, 'name') }} {% if filter.deity and filter.deity.slug == t.slug %}selected{% endif %}>{{ t|localized('name') }} ({{ t.total }})</option>{% endfor %}
+                </select>
+            </div>
+        {% endif %}
+        {% if facets.granth is defined and lock != 'scripture' and facets.granth is not empty %}
+            <div class="form-group">
+                <label class="form-label" for="f-granth">{{ taxonomy_label('scripture') }}</label>
+                <select id="f-granth" class="form-select" name="granth" data-action="change->autosubmit#submit">
+                    <option value="">{{ 'filters.all'|trans }}</option>
+                    {% for t in facets.granth %}<option value="{{ t.slug }}"{{ lang_attr(t, 'name') }} {% if filter.scripture and filter.scripture.slug == t.slug %}selected{% endif %}>{{ t|localized('name') }} ({{ t.total }})</option>{% endfor %}
+                </select>
+            </div>
+        {% endif %}
+
+        <div class="form-group">
+            <label class="form-label" for="f-duration">{{ 'filters.duration.label'|trans }}</label>
+            <select id="f-duration" class="form-select" name="duration" data-action="change->autosubmit#submit">
+                <option value="">{{ 'filters.any'|trans }}</option>
+                {% for key, label in constant('App\\DTO\\StoryListFilter::DURATIONS') %}<option value="{{ key }}" {% if filter.duration == key %}selected{% endif %}>{{ label|trans }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="f-audio">{{ 'filters.audio.label'|trans }}</label>
+            <select id="f-audio" class="form-select" name="audio" data-action="change->autosubmit#submit">
+                <option value="">{{ 'filters.all'|trans }}</option>
+                <option value="1" {% if filter.hasAudio is same as(true) %}selected{% endif %}>{{ 'filters.audio.with_audio'|trans }}</option>
+                <option value="0" {% if filter.hasAudio is same as(false) %}selected{% endif %}>{{ 'filters.audio.text_only'|trans }}</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="f-type">{{ 'filters.content_type'|trans }}</label>
+            <select id="f-type" class="form-select" name="type" data-action="change->autosubmit#submit">
+                <option value="">{{ 'filters.all'|trans }}</option>
+                {% for type in enum('App\\Enum\\SourceType').cases() %}<option value="{{ type.value }}" {% if filter.sourceType == type %}selected{% endif %}>{{ ('source_type.' ~ type.value ~ '.label')|trans }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label" for="f-sort">{{ 'filters.sort.label'|trans }}</label>
+            <select id="f-sort" class="form-select" name="sort" data-action="change->autosubmit#submit">
+                {% if filter.query is not null %}<option value="relevance" {% if filter.sort == 'relevance' %}selected{% endif %}>{{ 'filters.sort.relevance'|trans }}</option>{% endif %}
+                {% if lock == 'series' %}<option value="series" {% if filter.sort == 'series' %}selected{% endif %}>{{ 'filters.sort.series'|trans }}</option>{% endif %}
+                {% for key, label in constant('App\\DTO\\StoryListFilter::SORTS') %}<option value="{{ key }}" {% if filter.sort == key %}selected{% endif %}>{{ label|trans }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="cluster">
+            <button type="submit" class="btn btn-primary btn-sm">{{ 'filters.apply'|trans }}</button>
+            <a class="btn btn-ghost btn-sm" href="{{ action }}{% if filter.query is not null %}?q={{ filter.query|url_encode }}{% endif %}">{{ 'filters.clear'|trans }}</a>
+        </div>
+    </form>
+</div>

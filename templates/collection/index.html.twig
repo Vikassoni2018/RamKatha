@@ -1,0 +1,25 @@
+{% extends 'account/_layout.html.twig' %}
+
+{% block account_body %}
+<div class="flex-between mb-6">
+    <h1 class="mb-0">{{ 'collection.index.title'|trans }}</h1>
+    <a class="btn btn-primary btn-sm" href="{{ path('app_collection_new') }}">{{ icon('plus', 'icon-sm') }} {{ 'collection.index.new'|trans }}</a>
+</div>
+{% if collections is not empty %}
+    <div class="collection-list">
+        {% for row in collections %}
+            {% set c = row.collection %}
+            <article class="collection-card">
+                <h2><a href="{{ path('app_collection_show', {uuid: c.uuid.toRfc4122}) }}" data-user-content>{{ c.name }}</a></h2>
+                {% if c.description %}<p class="line-clamp-2" data-user-content>{{ c.description }}</p>{% endif %}
+                <div class="cluster">
+                    <span class="badge">{{ 'common.stories_count'|trans({'%count%': row.itemCount}) }}</span>
+                    <span class="badge badge-{{ c.visibility.value == 'private' ? 'neutral' : 'info' }}">{{ c.visibility.translationKey|trans }}</span>
+                </div>
+            </article>
+        {% endfor %}
+    </div>
+{% else %}
+    <twig:EmptyState icon="folder" :title="'collection.index.empty_title'|trans" :text="'collection.index.empty_text'|trans" :actionUrl="path('app_collection_new')" :actionLabel="'collection.index.empty_action'|trans" />
+{% endif %}
+{% endblock %}

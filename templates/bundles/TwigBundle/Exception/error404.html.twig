@@ -1,0 +1,22 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'error.not_found.title'|trans }} | {{ setting('site_name') }}{% endblock %}
+
+{% block body %}
+<div class="container">
+    <div class="error-page">
+        <span class="error-code" aria-hidden="true">404</span>
+        <h1>{{ 'error.not_found.heading'|trans }}</h1>
+        <p>{{ 'error.not_found.text'|trans }}</p>
+        <form class="search-field w-full narrow-field" action="{{ path('app_search') }}" method="get" role="search">
+            <label class="visually-hidden" for="e404-q">{{ 'error.not_found.search_label'|trans }}</label>
+            {{ icon('search', 'icon-sm') }}
+            <input id="e404-q" class="form-control" type="search" name="q" placeholder="{{ 'error.not_found.search_placeholder'|trans }}">
+        </form>
+        <div class="cluster">
+            <a class="btn btn-primary" href="{{ path('app_home') }}">{{ 'error.home'|trans }}</a>
+            <a class="btn btn-secondary" href="{{ path('app_story_index') }}">{{ 'common.all_stories'|trans }}</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

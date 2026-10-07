@@ -1,0 +1,84 @@
+# Hindi UI strings of the public site (default language). English: messages.en.yaml — keep both
+# files in sync (same keys, same %placeholders%); tests/Unit/I18n/TranslationCatalogueTest checks it.
+# Editorial content (stories, pages, taxonomy names) is NOT translated here: it lives in the database
+# with optional English fields (titleEn, bodyEn, ...).
+
+lang:
+    switcher: भाषा
+    name:
+        hi: हिंदी
+        en: English
+    short:
+        hi: हि
+        en: EN
+
+taxonomy:
+    category:
+        singular: श्रेणी
+        plural: श्रेणियाँ
+    deity:
+        singular: देवता
+        plural: देवी-देवता
+    scripture:
+        singular: ग्रंथ
+        plural: ग्रंथ
+    series:
+        singular: शृंखला
+        plural: कथा शृंखलाएँ
+    festival:
+        singular: पर्व
+        plural: पर्व-त्योहार
+    tag:
+        singular: टैग
+        plural: टैग
+
+seo:
+    home: मुख्य पृष्ठ
+    stories: कथाएँ
+    page_number: 'पृष्ठ %page%'
+    taxonomy_title: '%name% — %type% की कथाएँ'
+    taxonomy_description: '%name% से संबंधित कथाएँ पढ़ें और सुनें।'
+    collection_title: '%name% — संग्रह'
+    collection_description: कथाओं का एक संग्रह
+
+format:
+    minutes: '%minutes% मिनट'
+    hours_minutes: '%hours% घंटा %minutes% मिनट'
+
+i18n:
+    # Shown on English pages whose content has no English version yet (the Hindi original is shown).
+    story_not_translated: यह कथा अभी केवल हिंदी में उपलब्ध है। नीचे मूल हिंदी पाठ दिया गया है।
+    page_not_translated: यह पृष्ठ अभी केवल हिंदी में उपलब्ध है। नीचे मूल हिंदी पाठ दिया गया है।
+    read_in_hindi: हिंदी में पढ़ें
+    hindi_original: मूल हिंदी
+
+# Shared by several templates.
+common:
+    read_minutes: '%minutes% मिनट पढ़ें'
+    source_verified: स्रोत सत्यापित
+    demo_content: डेमो सामग्री (Demo Content)
+    audio_duration: ऑडियो अवधि
+    stories_count: '%count% कथाएँ'
+    all_stories: सभी कथाएँ
+    close: बंद करें
+
+# Public labels of App\Enum\SourceType: ('source_type.' ~ story.sourceType.value ~ '.label')|trans
+source_type:
+    direct_translation:
+        label: शास्त्र का प्रत्यक्ष अनुवाद
+        description: यह मूल ग्रंथ के पाठ का अनुवाद है।
+    scripture_adaptation:
+        label: शास्त्र पर आधारित रूपांतरण
+        description: यह कथा मूल ग्रंथ पर आधारित है, परंतु सरल भाषा में पुनः प्रस्तुत की गई है।
+    traditional_narrative:
+        label: पारंपरिक कथा
+        description: यह कथा परंपरा से कही-सुनी जाती रही है; विभिन्न स्रोतों में इसके रूप भिन्न हो सकते हैं।
+    folk_tradition:
+        label: लोक परंपरा
+        description: यह लोक परंपरा में प्रचलित कथा है; इसका किसी एक शास्त्र में उल्लेख आवश्यक नहीं है।
+    commentary:
+        label: व्याख्या / टीका
+        description: यह किसी ग्रंथ या प्रसंग की व्याख्या है।
+    original_editorial:
+        label: मौलिक संपादकीय सामग्री
+        description: यह हमारी संपादकीय टीम द्वारा लिखी गई सामग्री है।

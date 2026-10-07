@@ -1,0 +1,38 @@
+{#
+  Dependency-free SVG bar chart for daily series (views, listens, completions).
+  Accessible: a visually hidden table with the same data follows the chart.
+#}
+{% macro daily(series, title = 'Daily activity') %}
+    {% set n = series|length %}
+    {% set max = 1 %}
+    {% for d in series %}{% set max = max(max, d.views, d.audio_starts, d.audio_completions) %}{% endfor %}
+    {% set w = 1000 %}{% set h = 200 %}{% set gap = 2 %}
+    {% set bw = n > 0 ? (w / n) : w %}
+    <figure class="bar-chart">
+        <svg viewBox="0 0 {{ w }} {{ h + 20 }}" preserveAspectRatio="none" role="img" aria-label="{{ title }}">
+            <line x1="0" y1="{{ h }}" x2="{{ w }}" y2="{{ h }}" stroke="#eadfcf" stroke-width="1"/>
+            {% for d in series %}
+                {% set x = (loop.index0 * bw) %}
+                {% set vh = d.views / max * (h - 10) %}
+                {% set lh = d.audio_starts / max * (h - 10) %}
+                {% set ch = d.audio_completions / max * (h - 10) %}
+                <rect x="{{ x + gap }}" y="{{ h - vh }}" width="{{ max(1, bw - gap * 2) }}" height="{{ vh }}" fill="#e3c9ae"><title>{{ d.date }} · {{ d.views }} views</title></rect>
+                <rect x="{{ x + bw * 0.25 }}" y="{{ h - lh }}" width="{{ max(1, bw * 0.5) }}" height="{{ lh }}" fill="#7a1f2b"><title>{{ d.date }} · {{ d.audio_starts }} listens</title></rect>
+                <rect x="{{ x + bw * 0.4 }}" y="{{ h - ch }}" width="{{ max(1, bw * 0.2) }}" height="{{ ch }}" fill="#e07a1f"><title>{{ d.date }} · {{ d.audio_completions }} completed</title></rect>
+            {% endfor %}
+            {% if n > 0 %}
+                <text x="0" y="{{ h + 16 }}" font-size="12" fill="#776558">{{ series|first.date }}</text>
+                <text x="{{ w }}" y="{{ h + 16 }}" font-size="12" fill="#776558" text-anchor="end">{{ series|last.date }}</text>
+            {% endif %}
+        </svg>
+        <figcaption class="legend"><span class="l-views">Story views</span><span class="l-listens">Audio plays</span><span class="l-done">Completed listens</span><span class="text-subtle">max/day: {{ max }}</span></figcaption>
+        {# Hidden on a wrapper: a table cannot shrink below its content width, a block can. #}
+        <div class="visually-hidden">
+            <table>
+                <caption>{{ title }}</caption>
+                <thead><tr><th>Date</th><th>Views</th><th>Audio plays</th><th>Completed</th></tr></thead>
+                <tbody>{% for d in series %}<tr><td>{{ d.date }}</td><td>{{ d.views }}</td><td>{{ d.audio_starts }}</td><td>{{ d.audio_completions }}</td></tr>{% endfor %}</tbody>
+            </table>
+        </div>
+    </figure>
+{% endmacro %}

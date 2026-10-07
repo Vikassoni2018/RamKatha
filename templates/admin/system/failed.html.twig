@@ -1,0 +1,33 @@
+{% extends 'admin/layout.html.twig' %}
+{% import 'admin/_macros.html.twig' as ui %}
+
+{% block title %}Failed jobs{% endblock %}
+{% block breadcrumbs %}<li><a href="{{ path('admin_system') }}">System</a></li><li><span aria-current="page">Failed jobs</span></li>{% endblock %}
+
+{% block body %}
+<div class="admin-page-header"><div><h1>Failed jobs</h1><p>Messages that failed after all automatic retries (Doctrine “failed” queue). CLI: <code>php bin/console messenger:failed:show</code> / <code>messenger:failed:retry</code>.</p></div></div>
+{% if error %}{% include 'partials/_alert.html.twig' with {type: 'error', message: error} only %}{% endif %}
+{% if messages is not empty %}
+    <div class="admin-table-card">
+        <table class="admin-table">
+            <thead><tr><th>ID</th><th>Message</th><th>Error</th><th class="num">Retries</th><th class="cell-actions"><span class="visually-hidden">Actions</span></th></tr></thead>
+            <tbody>
+                {% for m in messages %}
+                    <tr>
+                        <td data-label="ID">{{ m.id }}</td>
+                        <td class="cell-main" data-label="Message"><strong>{{ m.class }}</strong>{% if m.failedAt %}<span class="cell-sub">{{ m.failedAt|ago }}</span>{% endif %}</td>
+                        <td data-label="Error"><span class="text-sm">{{ m.error|default('—')|truncate_words(240) }}</span>{% if m.errorClass %}<span class="cell-sub">{{ m.errorClass }}</span>{% endif %}</td>
+                        <td class="num" data-label="Retries">{{ m.retries }}</td>
+                        <td class="cell-actions">
+                            {{ ui.post_button(path('admin_system_failed_action', {id: m.id, action: 'retry'}), 'Retry', {icon: 'refresh', class: 'btn btn-ghost btn-sm'}) }}
+                            {{ ui.post_button(path('admin_system_failed_action', {id: m.id, action: 'remove'}), 'Remove', {icon: 'trash', class: 'btn btn-ghost btn-sm', confirm: 'Remove this failed message permanently?', danger: true, title: 'Remove message'}) }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    {{ ui.empty('check-circle', 'No failed jobs', 'All background jobs completed or are still being retried.') }}
+{% endif %}
+{% endblock %}
